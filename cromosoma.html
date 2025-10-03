@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Estructura del Cromosoma</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 20px;
+        min-height: 100vh;
+      }
+
+      .container {
+        max-width: 1400px;
+        margin: 0 auto;
+        background: white;
+        border-radius: 20px;
+        padding: 40px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      }
+
+      h1 {
+        text-align: center;
+        color: #667eea;
+        margin-bottom: 10px;
+        font-size: 2.5em;
+      }
+
+      .subtitle {
+        text-align: center;
+        color: #666;
+        margin-bottom: 40px;
+        font-size: 1.1em;
+      }
+
+      .section {
+        margin-bottom: 50px;
+      }
+
+      .section-title {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 15px 25px;
+        border-radius: 10px;
+        margin-bottom: 25px;
+        font-size: 1.4em;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .icon {
+        font-size: 1.5em;
+      }
+
+      /* Cromosoma lineal */
+      .cromosoma-lineal {
+        display: flex;
+        gap: 5px;
+        padding: 20px;
+        background: #f8f9fa;
+        border-radius: 10px;
+        overflow-x: auto;
+        margin-bottom: 20px;
+      }
+
+      .gen {
+        min-width: 60px;
+        height: 80px;
+        background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
+        border: 3px solid #2e7d32;
+        border-radius: 8px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: bold;
+        font-size: 18px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        transition: transform 0.2s;
+        position: relative;
+      }
+
+      .gen:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+      }
+
+      .gen-index {
+        font-size: 10px;
+        position: absolute;
+        top: 3px;
+        background: rgba(0, 0, 0, 0.3);
+        padding: 2px 6px;
+        border-radius: 4px;
+      }
+
+      .gen-value {
+        font-size: 22px;
+      }
+
+      .gen-label {
+        font-size: 9px;
+        margin-top: 3px;
+        opacity: 0.9;
+      }
+
+      /* Decodificación visual */
+      .decodificacion {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+        margin-top: 30px;
+      }
+
+      .decode-card {
+        background: white;
+        border: 2px solid #e0e0e0;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      }
+
+      .decode-card:hover {
+        border-color: #667eea;
+        box-shadow: 0 6px 16px rgba(102, 126, 234, 0.3);
+      }
+
+      .decode-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 15px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #f0f0f0;
+      }
+
+      .decode-gen-box {
+        background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
+        color: white;
+        padding: 8px 15px;
+        border-radius: 6px;
+        font-weight: bold;
+        font-size: 18px;
+      }
+
+      .decode-arrow {
+        font-size: 24px;
+        color: #667eea;
+      }
+
+      .decode-body {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .decode-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 8px;
+        background: #f8f9fa;
+        border-radius: 6px;
+      }
+
+      .decode-label {
+        color: #666;
+        font-weight: 500;
+      }
+
+      .decode-value {
+        color: #333;
+        font-weight: bold;
+      }
+
+      /* Ejemplo con clases */
+      .clase-ejemplo {
+        background: #fff3e0;
+        border-left: 5px solid #ff9800;
+        padding: 20px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+      }
+
+      .clase-titulo {
+        font-weight: bold;
+        color: #e65100;
+        margin-bottom: 10px;
+        font-size: 1.1em;
+      }
+
+      .clase-info {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 10px;
+        margin-top: 10px;
+      }
+
+      .info-item {
+        background: white;
+        padding: 10px;
+        border-radius: 6px;
+        border: 1px solid #ffcc80;
+      }
+
+      .info-label {
+        font-size: 0.85em;
+        color: #666;
+      }
+
+      .info-value {
+        font-weight: bold;
+        color: #e65100;
+        margin-top: 3px;
+      }
+
+      /* Tabla de horarios */
+      .horario-grid {
+        display: grid;
+        grid-template-columns: auto repeat(5, 1fr);
+        gap: 2px;
+        background: #e0e0e0;
+        border-radius: 10px;
+        overflow: hidden;
+        margin-top: 20px;
+      }
+
+      .horario-cell {
+        background: white;
+        padding: 15px 10px;
+        text-align: center;
+        font-size: 0.9em;
+      }
+
+      .horario-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        font-weight: bold;
+        padding: 15px 10px;
+      }
+
+      .horario-time {
+        background: #f5f5f5;
+        font-weight: 500;
+        font-size: 0.85em;
+        color: #666;
+      }
+
+      .horario-clase {
+        background: #4caf50;
+        color: white;
+        font-weight: bold;
+        font-size: 0.85em;
+        line-height: 1.4;
+      }
+
+      .horario-vacio {
+        background: #fafafa;
+      }
+
+      .horario-recreo {
+        background: #ff9800;
+        color: white;
+        font-weight: bold;
+      }
+
+      /* Fórmula matemática */
+      .formula {
+        background: #e8eaf6;
+        border: 2px solid #667eea;
+        border-radius: 10px;
+        padding: 20px;
+        margin: 20px 0;
+        font-family: "Courier New", monospace;
+        font-size: 1.1em;
+        text-align: center;
+      }
+
+      .formula-title {
+        color: #667eea;
+        font-weight: bold;
+        margin-bottom: 10px;
+      }
+
+      .highlight {
+        background: #fff9c4;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-weight: bold;
+      }
+
+      /* Leyenda */
+      .leyenda {
+        display: flex;
+        gap: 30px;
+        flex-wrap: wrap;
+        justify-content: center;
+        margin-top: 20px;
+        padding: 20px;
+        background: #f8f9fa;
+        border-radius: 10px;
+      }
+
+      .leyenda-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .leyenda-color {
+        width: 30px;
+        height: 30px;
+        border-radius: 6px;
+        border: 2px solid #333;
+      }
+
+      @media (max-width: 768px) {
+        .container {
+          padding: 20px;
+        }
+
+        h1 {
+          font-size: 1.8em;
+        }
+
+        .cromosoma-lineal {
+          padding: 10px;
+        }
+
+        .gen {
+          min-width: 50px;
+          height: 70px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>🧬 Estructura del Cromosoma</h1>
+      <p class="subtitle">
+        Algoritmo Genético para Optimización de Horarios Escolares
+      </p>
+
+      <!-- Sección 1: Representación Lineal -->
+      <div class="section">
+        <div class="section-title">
+          <span class="icon">🔢</span>
+          <span>1. Representación Lineal del Cromosoma</span>
+        </div>
+
+        <p style="margin-bottom: 20px; color: #666">
+          El cromosoma es un <strong>vector unidimensional</strong> donde cada
+          posición representa una hora de clase específica:
+        </p>
+
+        <div class="cromosoma-lineal">
+          <div class="gen">
+            <span class="gen-index">Gen 0</span>
+            <span class="gen-value">15</span>
+            <span class="gen-label">Clase 1-H1</span>
+          </div>
+          <div class="gen">
+            <span class="gen-index">Gen 1</span>
+            <span class="gen-value">23</span>
+            <span class="gen-label">Clase 1-H2</span>
+          </div>
+          <div class="gen">
+            <span class="gen-index">Gen 2</span>
+            <span class="gen-value">7</span>
+            <span class="gen-label">Clase 1-H3</span>
+          </div>
+          <div class="gen">
+            <span class="gen-index">Gen 3</span>
+            <span class="gen-value">31</span>
+            <span class="gen-label">Clase 1-H4</span>
+          </div>
+          <div class="gen">
+            <span class="gen-index">Gen 4</span>
+            <span class="gen-value">12</span>
+            <span class="gen-label">Clase 2-H1</span>
+          </div>
+          <div class="gen">
+            <span class="gen-index">Gen 5</span>
+            <span class="gen-value">28</span>
+            <span class="gen-label">Clase 2-H2</span>
+          </div>
+          <div class="gen">
+            <span class="gen-index">Gen 6</span>
+            <span class="gen-value">5</span>
+            <span class="gen-label">Clase 2-H3</span>
+          </div>
+          <div
+            class="gen"
+            style="background: #ccc; color: #666; border-color: #999"
+          >
+            <span class="gen-value">...</span>
+          </div>
+        </div>
+
+        <div class="formula">
+          <div class="formula-title">📐 Fórmula de Codificación:</div>
+          <div style="font-size: 1.3em; margin: 15px 0">
+            <span class="highlight">Valor del Gen</span> = Día × 9 + Bloque
+          </div>
+          <div style="font-size: 0.95em; color: #666">
+            Rango: 0 a 44 (5 días × 9 bloques - 1)
+          </div>
+        </div>
+
+        <div class="leyenda">
+          <div class="leyenda-item">
+            <div class="leyenda-color" style="background: #4caf50"></div>
+            <span><strong>Gen:</strong> Representa una hora de clase</span>
+          </div>
+          <div class="leyenda-item">
+            <div
+              class="leyenda-color"
+              style="background: white; border: 2px solid #333"
+            ></div>
+            <span><strong>Valor:</strong> Codifica día y bloque horario</span>
+          </div>
+          <div class="leyenda-item">
+            <div
+              class="leyenda-color"
+              style="background: linear-gradient(90deg, #4caf50, #ff9800)"
+            ></div>
+            <span><strong>Secuencia:</strong> Agrupado por clase</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sección 2: Decodificación -->
+      <div class="section">
+        <div class="section-title">
+          <span class="icon">🔓</span>
+          <span>2. Decodificación de Genes</span>
+        </div>
+
+        <p style="margin-bottom: 20px; color: #666">
+          Cada valor del gen se convierte en coordenadas de horario (día,
+          bloque):
+        </p>
+
+        <div class="decodificacion">
+          <div class="decode-card">
+            <div class="decode-header">
+              <div class="decode-gen-box">15</div>
+              <div class="decode-arrow">→</div>
+            </div>
+            <div class="decode-body">
+              <div class="decode-item">
+                <span class="decode-label">📅 Día:</span>
+                <span class="decode-value">Martes (15 ÷ 9 = 1)</span>
+              </div>
+              <div class="decode-item">
+                <span class="decode-label">⏰ Bloque:</span>
+                <span class="decode-value">6 (15 % 9)</span>
+              </div>
+              <div class="decode-item">
+                <span class="decode-label">🕐 Horario:</span>
+                <span class="decode-value">12:10-12:55</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="decode-card">
+            <div class="decode-header">
+              <div class="decode-gen-box">23</div>
+              <div class="decode-arrow">→</div>
+            </div>
+            <div class="decode-body">
+              <div class="decode-item">
+                <span class="decode-label">📅 Día:</span>
+                <span class="decode-value">Miércoles (23 ÷ 9 = 2)</span>
+              </div>
+              <div class="decode-item">
+                <span class="decode-label">⏰ Bloque:</span>
+                <span class="decode-value">5 (23 % 9)</span>
+              </div>
+              <div class="decode-item">
+                <span class="decode-label">🕐 Horario:</span>
+                <span class="decode-value">11:25-12:10</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="decode-card">
+            <div class="decode-header">
+              <div class="decode-gen-box">7</div>
+              <div class="decode-arrow">→</div>
+            </div>
+            <div class="decode-body">
+              <div class="decode-item">
+                <span class="decode-label">📅 Día:</span>
+                <span class="decode-value">Lunes (7 ÷ 9 = 0)</span>
+              </div>
+              <div class="decode-item">
+                <span class="decode-label">⏰ Bloque:</span>
+                <span class="decode-value">7 (7 % 9)</span>
+              </div>
+              <div class="decode-item">
+                <span class="decode-label">🕐 Horario:</span>
+                <span class="decode-value">13:25-14:10</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="decode-card">
+            <div class="decode-header">
+              <div class="decode-gen-box">0</div>
+              <div class="decode-arrow">→</div>
+            </div>
+            <div class="decode-body">
+              <div class="decode-item">
+                <span class="decode-label">📅 Día:</span>
+                <span class="decode-value">Lunes (0 ÷ 9 = 0)</span>
+              </div>
+              <div class="decode-item">
+                <span class="decode-label">⏰ Bloque:</span>
+                <span class="decode-value">0 (0 % 9)</span>
+              </div>
+              <div class="decode-item">
+                <span class="decode-label">🕐 Horario:</span>
+                <span class="decode-value">07:20-08:05</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sección 3: Ejemplo Real -->
+      <div class="section">
+        <div class="section-title">
+          <span class="icon">📚</span>
+          <span>3. Ejemplo Real: Matemática 3°A</span>
+        </div>
+
+        <div class="clase-ejemplo">
+          <div class="clase-titulo">📖 Clase: Matemática - Grado 3°A</div>
+          <div class="clase-info">
+            <div class="info-item">
+              <div class="info-label">Docente:</div>
+              <div class="info-value">Edwin García</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">Horas semanales:</div>
+              <div class="info-value">4 horas</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">Aula fija:</div>
+              <div class="info-value">AULA_3A</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">Genes asignados:</div>
+              <div class="info-value">Índices 0-3</div>
+            </div>
+          </div>
+        </div>
+
+        <p style="margin: 20px 0; color: #666">
+          <strong>Cromosoma:</strong> [15, 23, 7, 31, ...]
+        </p>
+
+        <div class="cromosoma-lineal" style="background: #fff3e0">
+          <div
+            class="gen"
+            style="
+              background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+              border-color: #e65100;
+            "
+          >
+            <span class="gen-index">Idx 0</span>
+            <span class="gen-value">15</span>
+            <span class="gen-label">Mar 12:10</span>
+          </div>
+          <div
+            class="gen"
+            style="
+              background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+              border-color: #e65100;
+            "
+          >
+            <span class="gen-index">Idx 1</span>
+            <span class="gen-value">23</span>
+            <span class="gen-label">Mié 11:25</span>
+          </div>
+          <div
+            class="gen"
+            style="
+              background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+              border-color: #e65100;
+            "
+          >
+            <span class="gen-index">Idx 2</span>
+            <span class="gen-value">7</span>
+            <span class="gen-label">Lun 13:25</span>
+          </div>
+          <div
+            class="gen"
+            style="
+              background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+              border-color: #e65100;
+            "
+          >
+            <span class="gen-index">Idx 3</span>
+            <span class="gen-value">31</span>
+            <span class="gen-label">Jue 08:50</span>
+          </div>
+          <div
+            class="gen"
+            style="background: #e0e0e0; color: #666; border-color: #999"
+          >
+            <span class="gen-value">...</span>
+            <span class="gen-label">Otras clases</span>
+          </div>
+        </div>
+
+        <div class="horario-grid">
+          <div class="horario-header"></div>
+          <div class="horario-header">Lunes</div>
+          <div class="horario-header">Martes</div>
+          <div class="horario-header">Miércoles</div>
+          <div class="horario-header">Jueves</div>
+          <div class="horario-header">Viernes</div>
+
+          <div class="horario-time">07:20-08:05</div>
+          <div class="horario-vacio"></div>
+          <div class="horario-vacio"></div>
+          <div class="horario-vacio"></div>
+          <div class="horario-vacio"></div>
+          <div class="horario-vacio"></div>
+
+          <div class="horario-time">08:05-08:50</div>
+          <div class="horario-vacio"></div>
+          <div class="horario-vacio"></div>
+          <div class="horario-vacio"></div>
+          <div class="horario-vacio"></div>
+          <div class="horario-vacio"></div>
+
+          <div class="horario-time">08:50-09:35</div>
+          <div class="horario-vacio"></div>
+          <div class="horario-vacio"></div>
+          <div class="horario-vacio"></div>
+          <div class="horario-clase">Matemática<br />3°A</div>
+          <div class="horario-vacio"></div>
+
+          <div class="horario-time">09:35-10:20</div>
+          <div class="horario-vacio"></div>
+          <div class="horario-vacio"></div>
+          <div class="horario-vacio"></div>
+          <div class="horario-vacio"></div>
+          <div class="horario-vacio"></div>
+
+          <div class="horario-time">10:20-10:40</div>
+          <div class="horario-recreo" colspan="5">🍎 RECREO</div>
+          <div class="horario-recreo"></div>
+          <div class="horario-recreo"></div>
+          <div class="horario-recreo"></div>
+          <div class="horario-recreo"></div>
+
+          <div class="horario-time">10:40-11:25</div>
+          <div class="horario-vacio"></div>
+          <div class="horario-vacio"></div>
+          <div class="horario-vacio"></div>
+          <div class="horario-vacio"></div>
+          <div class="horario-vacio"></div>
+
+          <div class="horario-time">11:25-12:10</div>
+          <div class="horario-vacio"></div>
+          <div class="horario-vacio"></div>
+          <div class="horario-clase">Matemática<br />3°A</div>
+          <div class="horario-vacio"></div>
+          <div class="horario-vacio"></div>
+
+          <div class="horario-time">12:10-12:55</div>
+          <div class="horario-vacio"></div>
+          <div class="horario-clase">Matemática<br />3°A</div>
+          <div class="horario-vacio"></div>
+          <div class="horario-vacio"></div>
+          <div class="horario-vacio"></div>
+
+          <div class="horario-time">12:55-13:25</div>
+          <div class="horario-recreo">🍽️ ALMUERZO</div>
+          <div class="horario-recreo"></div>
+          <div class="horario-recreo"></div>
+          <div class="horario-recreo"></div>
+          <div class="horario-recreo"></div>
+
+          <div class="horario-time">13:25-14:10</div>
+          <div class="horario-clase">Matemática<br />3°A</div>
+          <div class="horario-vacio"></div>
+          <div class="horario-vacio"></div>
+          <div class="horario-vacio"></div>
+          <div class="horario-vacio"></div>
+
+          <div class="horario-time">14:10-14:55</div>
+          <div class="horario-vacio"></div>
+          <div class="horario-vacio"></div>
+          <div class="horario-vacio"></div>
+          <div class="horario-vacio"></div>
+          <div class="horario-vacio"></div>
+        </div>
+      </div>
+
+      <!-- Sección 4: Ventajas -->
+      <div class="section">
+        <div class="section-title">
+          <span class="icon">✨</span>
+          <span>4. Ventajas de esta Codificación</span>
+        </div>
+
+        <div
+          style="
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+          "
+        >
+          <div
+            style="
+              background: #e8f5e9;
+              padding: 20px;
+              border-radius: 10px;
+              border-left: 5px solid #4caf50;
+            "
+          >
+            <div style="font-size: 2em; margin-bottom: 10px">🚀</div>
+            <strong style="color: #2e7d32">Eficiencia</strong>
+            <p style="margin-top: 8px; color: #666; font-size: 0.95em">
+              Vector 1D simple, fácil de manipular con NumPy y PyGAD
+            </p>
+          </div>
+
+          <div
+            style="
+              background: #e3f2fd;
+              padding: 20px;
+              border-radius: 10px;
+              border-left: 5px solid #2196f3;
+            "
+          >
+            <div style="font-size: 2em; margin-bottom: 10px">🔀</div>
+            <strong style="color: #1565c0">Operadores Genéticos</strong>
+            <p style="margin-top: 8px; color: #666; font-size: 0.95em">
+              Cruce y mutación directos sobre el vector
+            </p>
+          </div>
+
+          <div
+            style="
+              background: #fff3e0;
+              padding: 20px;
+              border-radius: 10px;
+              border-left: 5px solid #ff9800;
+            "
+          >
+            <div style="font-size: 2em; margin-bottom: 10px">🎯</div>
+            <strong style="color: #e65100">Escalabilidad</strong>
+            <p style="margin-top: 8px; color: #666; font-size: 0.95em">
+              Agregar más clases solo extiende el vector
+            </p>
+          </div>
+
+          <div
+            style="
+              background: #f3e5f5;
+              padding: 20px;
+              border-radius: 10px;
+              border-left: 5px solid #9c27b0;
+            "
+          >
+            <div style="font-size: 2em; margin-bottom: 10px">🔍</div>
+            <strong style="color: #6a1b9a">Validación Rápida</strong>
+            <p style="margin-top: 8px; color: #666; font-size: 0.95em">
+              Fácil detección de conflictos en O(n)
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

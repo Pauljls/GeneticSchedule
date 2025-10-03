@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cromosoma: Vector 1D vs Matriz 3D</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 20px;
+        min-height: 100vh;
+      }
+
+      .container {
+        max-width: 1400px;
+        margin: 0 auto;
+        background: white;
+        border-radius: 20px;
+        padding: 40px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      }
+
+      h1 {
+        text-align: center;
+        color: #667eea;
+        margin-bottom: 15px;
+        font-size: 2.5em;
+      }
+
+      .alert {
+        background: #fff3cd;
+        border: 2px solid #ffc107;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 30px;
+        text-align: center;
+      }
+
+      .alert-title {
+        font-size: 1.5em;
+        color: #856404;
+        font-weight: bold;
+        margin-bottom: 10px;
+      }
+
+      .alert-text {
+        color: #856404;
+        font-size: 1.1em;
+      }
+
+      .comparison {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 30px;
+        margin-bottom: 40px;
+      }
+
+      .option {
+        border-radius: 15px;
+        padding: 30px;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .option-used {
+        background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
+        color: white;
+        box-shadow: 0 10px 30px rgba(76, 175, 80, 0.4);
+      }
+
+      .option-notused {
+        background: #f5f5f5;
+        border: 3px dashed #ccc;
+        color: #666;
+      }
+
+      .badge {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        padding: 10px 20px;
+        border-radius: 20px;
+        font-weight: bold;
+        font-size: 0.9em;
+      }
+
+      .badge-yes {
+        background: #fff;
+        color: #4caf50;
+      }
+
+      .badge-no {
+        background: #ff5252;
+        color: white;
+      }
+
+      .option-title {
+        font-size: 2em;
+        margin-bottom: 10px;
+        font-weight: bold;
+      }
+
+      .option-subtitle {
+        font-size: 1.2em;
+        margin-bottom: 20px;
+        opacity: 0.9;
+      }
+
+      .visual-1d {
+        display: flex;
+        gap: 5px;
+        overflow-x: auto;
+        padding: 20px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 10px;
+        margin: 20px 0;
+      }
+
+      .gene-1d {
+        min-width: 50px;
+        height: 70px;
+        background: rgba(255, 255, 255, 0.9);
+        border: 2px solid rgba(255, 255, 255, 0.5);
+        border-radius: 8px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        color: #2e7d32;
+        font-weight: bold;
+        font-size: 16px;
+      }
+
+      .gene-1d-index {
+        font-size: 9px;
+        color: #666;
+      }
+
+      .gene-1d-value {
+        font-size: 20px;
+        margin: 5px 0;
+      }
+
+      .visual-3d {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 3px;
+        padding: 20px;
+        background: rgba(0, 0, 0, 0.1);
+        border-radius: 10px;
+        margin: 20px 0;
+      }
+
+      .cell-3d {
+        aspect-ratio: 1;
+        background: rgba(255, 255, 255, 0.3);
+        border: 1px solid rgba(0, 0, 0, 0.2);
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 10px;
+        text-align: center;
+        padding: 5px;
+      }
+
+      .pros-cons {
+        margin-top: 20px;
+      }
+
+      .pros {
+        background: rgba(255, 255, 255, 0.2);
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 10px;
+      }
+
+      .pros-title {
+        font-weight: bold;
+        font-size: 1.1em;
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .pros-list {
+        list-style: none;
+        padding-left: 0;
+      }
+
+      .pros-list li {
+        padding: 5px 0;
+        padding-left: 25px;
+        position: relative;
+      }
+
+      .pros-list li:before {
+        content: "✓";
+        position: absolute;
+        left: 0;
+        font-weight: bold;
+        font-size: 1.2em;
+      }
+
+      .option-used .pros-list li:before {
+        color: #fff;
+      }
+
+      .option-notused .pros-list li:before {
+        color: #ff5252;
+      }
+
+      .code-block {
+        background: #1e1e1e;
+        color: #d4d4d4;
+        padding: 20px;
+        border-radius: 10px;
+        font-family: "Courier New", monospace;
+        font-size: 0.95em;
+        margin: 20px 0;
+        overflow-x: auto;
+      }
+
+      .code-comment {
+        color: #6a9955;
+      }
+
+      .code-keyword {
+        color: #569cd6;
+      }
+
+      .code-number {
+        color: #b5cea8;
+      }
+
+      .code-string {
+        color: #ce9178;
+      }
+
+      .reason-section {
+        background: #e8eaf6;
+        border-left: 5px solid #667eea;
+        padding: 30px;
+        border-radius: 10px;
+        margin: 30px 0;
+      }
+
+      .reason-title {
+        font-size: 1.8em;
+        color: #667eea;
+        margin-bottom: 20px;
+        font-weight: bold;
+      }
+
+      .reason-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+        margin-top: 20px;
+      }
+
+      .reason-card {
+        background: white;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      }
+
+      .reason-icon {
+        font-size: 2.5em;
+        margin-bottom: 10px;
+      }
+
+      .reason-card-title {
+        font-weight: bold;
+        color: #667eea;
+        margin-bottom: 10px;
+        font-size: 1.1em;
+      }
+
+      .reason-card-text {
+        color: #666;
+        line-height: 1.6;
+      }
+
+      .workflow {
+        background: #f8f9fa;
+        padding: 30px;
+        border-radius: 15px;
+        margin: 30px 0;
+      }
+
+      .workflow-title {
+        font-size: 1.5em;
+        color: #333;
+        margin-bottom: 20px;
+        text-align: center;
+        font-weight: bold;
+      }
+
+      .workflow-steps {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 20px;
+      }
+
+      .workflow-step {
+        flex: 1;
+        min-width: 200px;
+        background: white;
+        padding: 20px;
+        border-radius: 10px;
+        text-align: center;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        position: relative;
+      }
+
+      .workflow-step:not(:last-child):after {
+        content: "→";
+        position: absolute;
+        right: -30px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 2em;
+        color: #667eea;
+        font-weight: bold;
+      }
+
+      .workflow-number {
+        background: #667eea;
+        color: white;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 1.2em;
+        margin: 0 auto 15px;
+      }
+
+      .workflow-text {
+        color: #666;
+        font-weight: 500;
+      }
+
+      @media (max-width: 768px) {
+        .comparison {
+          grid-template-columns: 1fr;
+        }
+
+        .workflow-step:not(:last-child):after {
+          content: "↓";
+          right: 50%;
+          top: auto;
+          bottom: -30px;
+          transform: translateX(50%);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>🧬 Vector 1D vs Matriz 3D</h1>
+
+      <div class="alert">
+        <div class="alert-title">⚠️ Aclaración Importante</div>
+        <div class="alert-text">
+          En el código <strong>SÍ usamos Vector 1D</strong>, NO matriz 3D.<br />
+          La matriz 3D solo aparece en <code>to_matrix()</code> para
+          <strong>visualizar resultados</strong>.
+        </div>
+      </div>
+
+      <div class="comparison">
+        <!-- Opción 1: Vector 1D (LO QUE USAMOS) -->
+        <div class="option option-used">
+          <div class="badge badge-yes">✓ IMPLEMENTADO</div>
+          <div class="option-title">Vector 1D</div>
+          <div class="option-subtitle">Codificación Lineal</div>
+
+          <div class="code-block">
+            <span class="code-comment"># Cromosoma REAL en el código:</span>
+            cromosoma = np.array([<span class="code-number">15</span>,
+            <span class="code-number">23</span>,
+            <span class="code-number">7</span>,
+            <span class="code-number">31</span>,
+            <span class="code-number">12</span>, ...])
+            <span class="code-comment"
+              ># Longitud = suma de horas de todas las clases</span
+            >
+
+            <span class="code-comment"># Cada valor = día * 9 + bloque</span>
+            <span class="code-keyword">def</span> decodificar(gen): dia = gen //
+            <span class="code-number">9</span> bloque = gen %
+            <span class="code-number">9</span>
+            <span class="code-keyword">return</span> dia, bloque
+          </div>
+
+          <div class="visual-1d">
+            <div class="gene-1d">
+              <div class="gene-1d-index">0</div>
+              <div class="gene-1d-value">15</div>
+            </div>
+            <div class="gene-1d">
+              <div class="gene-1d-index">1</div>
+              <div class="gene-1d-value">23</div>
+            </div>
+            <div class="gene-1d">
+              <div class="gene-1d-index">2</div>
+              <div class="gene-1d-value">7</div>
+            </div>
+            <div class="gene-1d">
+              <div class="gene-1d-index">3</div>
+              <div class="gene-1d-value">31</div>
+            </div>
+            <div class="gene-1d">
+              <div class="gene-1d-index">4</div>
+              <div class="gene-1d-value">12</div>
+            </div>
+            <div class="gene-1d" style="background: rgba(255, 255, 255, 0.5)">
+              <div class="gene-1d-value">...</div>
+            </div>
+          </div>
+
+          <div class="pros-cons">
+            <div class="pros">
+              <div class="pros-title"><span>✨</span> Ventajas:</div>
+              <ul class="pros-list">
+                <li>Compatible con PyGAD directamente</li>
+                <li>Operadores genéticos simples (cruce, mutación)</li>
+                <li>Memoria eficiente: O(n) donde n = horas totales</li>
+                <li>Fácil paralelización</li>
+                <li>Manipulación rápida con NumPy</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- Opción 2: Matriz 3D (NO LA USAMOS) -->
+        <div class="option option-notused">
+          <div class="badge badge-no">✗ NO USADO</div>
+          <div class="option-title">Matriz 3D</div>
+          <div class="option-subtitle">Estructura Espacial</div>
+
+          <div class="code-block">
+            <span class="code-comment"># Esto NO es el cromosoma:</span>
+            horario = np.zeros((<span class="code-number">3</span>,
+            <span class="code-number">5</span>,
+            <span class="code-number">9</span>))
+            <span class="code-comment"># Shape: (grados, días, bloques)</span>
+
+            <span class="code-comment"># Acceso directo:</span>
+            horario[grado][dia][bloque] = docente_id
+
+            <span class="code-comment"
+              ># Problema: ¿Cómo aplicar cruce/mutación?</span
+            >
+            <span class="code-comment"># PyGAD espera vectores 1D</span>
+          </div>
+
+          <div class="visual-3d">
+            <div class="cell-3d">0</div>
+            <div class="cell-3d">2</div>
+            <div class="cell-3d">0</div>
+            <div class="cell-3d">1</div>
+            <div class="cell-3d">0</div>
+            <div class="cell-3d">1</div>
+            <div class="cell-3d">0</div>
+            <div class="cell-3d">2</div>
+            <div class="cell-3d">0</div>
+            <div class="cell-3d">0</div>
+            <div class="cell-3d">1</div>
+            <div class="cell-3d">3</div>
+            <div class="cell-3d">0</div>
+            <div class="cell-3d">2</div>
+            <div class="cell-3d">0</div>
+          </div>
+
+          <div class="pros-cons">
+            <div class="pros">
+              <div class="pros-title"><span>✗</span> Desventajas:</div>
+              <ul class="pros-list">
+                <li>Incompatible con PyGAD sin conversión</li>
+                <li>Operadores genéticos complejos</li>
+                <li>Desperdicio de memoria (muchos ceros)</li>
+                <li>Difícil de paralelizar</li>
+                <li>Requiere aplanamiento constante</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Razones por las que usamos Vector 1D -->
+      <div class="reason-section">
+        <div class="reason-title">🎯 ¿Por qué Vector 1D?</div>
+        <div class="reason-grid">
+          <div class="reason-card">
+            <div class="reason-icon">🔧</div>
+            <div class="reason-card-title">PyGAD Nativo</div>
+            <div class="reason-card-text">
+              PyGAD está diseñado para trabajar con vectores 1D. Usar matriz 3D
+              requeriría conversiones constantes.
+            </div>
+          </div>
+
+          <div class="reason-card">
+            <div class="reason-icon">⚡</div>
+            <div class="reason-card-title">Performance</div>
+            <div class="reason-card-text">
+              Las operaciones con vectores NumPy 1D son extremadamente rápidas y
+              optimizadas.
+            </div>
+          </div>
+
+          <div class="reason-card">
+            <div class="reason-icon">🔀</div>
+            <div class="reason-card-title">Operadores Simples</div>
+            <div class="reason-card-text">
+              Cruce de un punto, mutación aleatoria y selección funcionan
+              naturalmente con vectores 1D.
+            </div>
+          </div>
+
+          <div class="reason-card">
+            <div class="reason-icon">💾</div>
+            <div class="reason-card-title">Memoria Eficiente</div>
+            <div class="reason-card-text">
+              Solo almacenamos horas realmente asignadas, no toda la grilla de
+              horarios posibles.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Flujo de trabajo -->
+      <div class="workflow">
+        <div class="workflow-title">🔄 Flujo en el Código</div>
+        <div class="workflow-steps">
+          <div class="workflow-step">
+            <div class="workflow-number">1</div>
+            <div class="workflow-text">
+              <strong>Cromosoma 1D</strong><br />
+              [15, 23, 7, 31, ...]
+            </div>
+          </div>
+
+          <div class="workflow-step">
+            <div class="workflow-number">2</div>
+            <div class="workflow-text">
+              <strong>PyGAD</strong><br />
+              Evoluciona población
+            </div>
+          </div>
+
+          <div class="workflow-step">
+            <div class="workflow-number">3</div>
+            <div class="workflow-text">
+              <strong>Mejor Solución</strong><br />
+              Vector optimizado
+            </div>
+          </div>
+
+          <div class="workflow-step">
+            <div class="workflow-number">4</div>
+            <div class="workflow-text">
+              <strong>to_matrix()</strong><br />
+              Convertir a 3D para mostrar
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Código real del proyecto -->
+      <div class="reason-section">
+        <div class="reason-title">💻 Código Real del Proyecto</div>
+
+        <div class="code-block">
+          <span class="code-comment"
+            ># 1. Definición del cromosoma (Vector 1D)</span
+          >
+          <span class="code-keyword">class</span> GeneticScheduler:
+          <span class="code-keyword">def</span> __init__(<span
+            class="code-keyword"
+            >self</span
+          >, ...):
+          <span class="code-comment"
+            ># Longitud = suma de todas las horas semanales</span
+          >
+          <span class="code-keyword">self</span>.longitud_cromosoma =
+          sum(c.horas_semanales <span class="code-keyword">for</span> c
+          <span class="code-keyword">in</span> clases)
+
+          <span class="code-comment"
+            ># 2. PyGAD trabaja con el vector 1D directamente</span
+          >
+          ga_instance = pygad.GA( num_genes=<span class="code-keyword"
+            >self</span
+          >.longitud_cromosoma,
+          <span class="code-comment"># Vector 1D</span> gene_space=<span
+            class="code-keyword"
+            >list</span
+          >(range(<span class="code-number">45</span>)),
+          <span class="code-comment"># Valores 0-44</span> fitness_func=<span
+            class="code-keyword"
+            >self</span
+          >.fitness_function )
+
+          <span class="code-comment"
+            ># 3. Función de fitness recibe vector 1D</span
+          >
+          <span class="code-keyword">def</span> fitness_function(<span
+            class="code-keyword"
+            >self</span
+          >, ga_instance, solution, solution_idx):
+          <span class="code-comment"
+            ># solution es un np.array 1D: [15, 23, 7, ...]</span
+          >
+          penalizacion =
+          <span class="code-keyword">self</span>._calc_huecos(solution)
+          <span class="code-keyword">return</span> -penalizacion
+
+          <span class="code-comment"
+            ># 4. SOLO al final convertimos a matriz para visualizar</span
+          >
+          <span class="code-keyword">def</span> generar_horarios_docentes(<span
+            class="code-keyword"
+            >self</span
+          >, solucion: np.ndarray):
+          <span class="code-comment"
+            ># Aquí SÍ creamos estructura 3D pero SOLO para mostrar</span
+          >
+          horario_df = pd.DataFrame(...)
+          <span class="code-comment"># Para Excel/Gráficos</span>
+          <span class="code-keyword">return</span> horario_df
+        </div>
+      </div>
+
+      <!-- Ejemplo Visual Final -->
+      <div
+        class="reason-section"
+        style="background: #e8f5e9; border-left-color: #4caf50"
+      >
+        <div class="reason-title" style="color: #2e7d32">✅ Resumen</div>
+        <div style="font-size: 1.1em; line-height: 1.8; color: #333">
+          <p style="margin-bottom: 15px">
+            <strong>Durante la optimización:</strong> El cromosoma es un
+            <span
+              style="
+                background: #c8e6c9;
+                padding: 3px 8px;
+                border-radius: 4px;
+                font-weight: bold;
+              "
+              >Vector 1D</span
+            >
+          </p>
+          <p style="margin-bottom: 15px">
+            <strong>Después de optimizar:</strong> Convertimos a
+            matrices/DataFrames solo para
+            <span
+              style="
+                background: #c8e6c9;
+                padding: 3px 8px;
+                border-radius: 4px;
+                font-weight: bold;
+              "
+              >mostrar resultados</span
+            >
+          </p>
+          <p>
+            <strong>Razón principal:</strong> PyGAD está optimizado para
+            vectores 1D, y usarlos nos da la
+            <span
+              style="
+                background: #c8e6c9;
+                padding: 3px 8px;
+                border-radius: 4px;
+                font-weight: bold;
+              "
+              >máxima eficiencia</span
+            >
+          </p>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
