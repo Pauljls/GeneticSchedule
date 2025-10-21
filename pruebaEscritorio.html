@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Prueba de Escritorio</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 20px;
+        min-height: 100vh;
+      }
+
+      .container {
+        max-width: 1600px;
+        margin: 0 auto;
+        background: white;
+        border-radius: 20px;
+        padding: 40px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      }
+
+      h1 {
+        text-align: center;
+        color: #667eea;
+        margin-bottom: 30px;
+        font-size: 2.5em;
+      }
+
+      .section {
+        margin: 40px 0;
+        background: #f8f9fa;
+        padding: 30px;
+        border-radius: 15px;
+        border-left: 6px solid #667eea;
+      }
+
+      .section-title {
+        font-size: 1.8em;
+        font-weight: bold;
+        color: #667eea;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .icon {
+        font-size: 1.5em;
+      }
+
+      .data-table {
+        background: white;
+        border-radius: 12px;
+        overflow: hidden;
+        margin: 20px 0;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      }
+
+      .table-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 15px 20px;
+        font-weight: bold;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 10px;
+      }
+
+      .table-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 10px;
+        padding: 15px 20px;
+        border-bottom: 1px solid #e9ecef;
+        align-items: center;
+      }
+
+      .table-row:last-child {
+        border-bottom: none;
+      }
+
+      .table-row:nth-child(even) {
+        background: #f8f9fa;
+      }
+
+      .cell {
+        padding: 10px;
+        border-radius: 6px;
+      }
+
+      .cell-label {
+        font-weight: 600;
+        color: #667eea;
+        background: #e8eaf6;
+        padding: 8px 12px;
+        border-radius: 6px;
+      }
+
+      .cell-data {
+        color: #495057;
+      }
+
+      .cromosoma-display {
+        background: white;
+        padding: 20px;
+        border-radius: 12px;
+        margin: 20px 0;
+        overflow-x: auto;
+      }
+
+      .cromosoma-grado {
+        margin: 20px 0;
+        padding: 15px;
+        background: #f8f9fa;
+        border-radius: 10px;
+        border-left: 4px solid;
+      }
+
+      .cromo-3a {
+        border-left-color: #ff6b6b;
+      }
+      .cromo-3b {
+        border-left-color: #4ecdc4;
+      }
+      .cromo-4a {
+        border-left-color: #45b7d1;
+      }
+
+      .cromosoma-label {
+        font-weight: bold;
+        margin-bottom: 10px;
+        color: #333;
+      }
+
+      .cromosoma-valores {
+        display: flex;
+        gap: 3px;
+        flex-wrap: wrap;
+        font-family: "Courier New", monospace;
+        font-size: 0.9em;
+      }
+
+      .cromosoma-gen {
+        width: 35px;
+        height: 35px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: white;
+        border: 2px solid #dee2e6;
+        border-radius: 4px;
+        font-weight: bold;
+      }
+
+      .gen-ocupado {
+        background: #4caf50;
+        color: white;
+        border-color: #2e7d32;
+      }
+
+      .gen-vacio {
+        background: #f5f5f5;
+        color: #999;
+      }
+
+      .paso {
+        background: white;
+        border-radius: 12px;
+        padding: 25px;
+        margin: 20px 0;
+        border-left: 6px solid;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      }
+
+      .paso-1 {
+        border-left-color: #ff9800;
+      }
+      .paso-2 {
+        border-left-color: #f44336;
+      }
+      .paso-3 {
+        border-left-color: #9c27b0;
+      }
+      .paso-4 {
+        border-left-color: #2196f3;
+      }
+      .paso-5 {
+        border-left-color: #4caf50;
+      }
+
+      .paso-numero {
+        display: inline-block;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        width: 45px;
+        height: 45px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.3em;
+        font-weight: bold;
+        margin-bottom: 15px;
+      }
+
+      .paso-titulo {
+        font-size: 1.3em;
+        font-weight: bold;
+        color: #333;
+        margin-bottom: 15px;
+      }
+
+      .paso-contenido {
+        color: #495057;
+        line-height: 1.8;
+      }
+
+      .formula-box {
+        background: #e8eaf6;
+        border: 2px solid #667eea;
+        border-radius: 10px;
+        padding: 20px;
+        margin: 15px 0;
+        font-family: "Courier New", monospace;
+        text-align: center;
+      }
+
+      .formula {
+        font-size: 1.1em;
+        color: #333;
+        font-weight: bold;
+      }
+
+      .resultado {
+        background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
+        color: white;
+        padding: 20px;
+        border-radius: 10px;
+        margin: 15px 0;
+        text-align: center;
+        font-size: 1.2em;
+        font-weight: bold;
+      }
+
+      .resultado-incorrecto {
+        background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
+      }
+
+      .horario-visual {
+        background: white;
+        padding: 15px;
+        border-radius: 10px;
+        margin: 15px 0;
+        display: grid;
+        grid-template-columns: auto repeat(5, 1fr);
+        gap: 2px;
+        border: 1px solid #dee2e6;
+      }
+
+      .hora-cell {
+        background: white;
+        padding: 10px;
+        text-align: center;
+        font-size: 0.85em;
+        border: 1px solid #dee2e6;
+      }
+
+      .hora-header {
+        background: #667eea;
+        color: white;
+        font-weight: bold;
+        padding: 10px;
+      }
+
+      .hora-time {
+        background: #f8f9fa;
+        font-weight: 600;
+      }
+
+      .hora-clase {
+        background: #4caf50;
+        color: white;
+        font-weight: bold;
+      }
+
+      .hora-vacia {
+        background: #fafafa;
+        color: #ccc;
+      }
+
+      .highlight-box {
+        background: #fff3cd;
+        border: 3px solid #ffc107;
+        border-radius: 10px;
+        padding: 20px;
+        margin: 20px 0;
+      }
+
+      .highlight-title {
+        color: #856404;
+        font-weight: bold;
+        margin-bottom: 10px;
+        font-size: 1.1em;
+      }
+
+      .highlight-text {
+        color: #856404;
+        line-height: 1.7;
+      }
+
+      .tab-buttons {
+        display: flex;
+        gap: 10px;
+        margin: 20px 0;
+        flex-wrap: wrap;
+      }
+
+      .tab-btn {
+        background: #667eea;
+        color: white;
+        padding: 12px 25px;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: bold;
+        font-size: 1em;
+        transition: all 0.3s;
+      }
+
+      .tab-btn:hover {
+        background: #764ba2;
+        transform: translateY(-2px);
+      }
+
+      .tab-btn.active {
+        background: #764ba2;
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+      }
+
+      .tab-content {
+        display: none;
+      }
+
+      .tab-content.active {
+        display: block;
+      }
+
+      @media (max-width: 768px) {
+        .cromosoma-gen {
+          width: 28px;
+          height: 28px;
+          font-size: 0.8em;
+        }
+
+        .table-header,
+        .table-row {
+          grid-template-columns: 1fr;
+        }
+
+        .horario-visual {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>🧪 Prueba de Escritorio - Algoritmo Genético</h1>
+
+      <!-- DATOS INICIALES -->
+      <div class="section">
+        <div class="section-title">
+          <span class="icon">📊</span>
+          <span>1. Datos Iniciales del Problema</span>
+        </div>
+
+        <div
+          style="
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin: 20px 0;
+          "
+        >
+          <h3 style="color: #667eea; margin-bottom: 15px">📚 Docentes</h3>
+          <div class="data-table">
+            <div class="table-header">
+              <div>ID</div>
+              <div>Nombre</div>
+              <div>Horas Req.</div>
+              <div>Disponibilidad</div>
+            </div>
+            <div class="table-row">
+              <div class="cell-label">0</div>
+              <div class="cell-data">Edwin García</div>
+              <div class="cell-data">10 hrs</div>
+              <div class="cell-data">Lun-Vie completo</div>
+            </div>
+            <div class="table-row">
+              <div class="cell-label">1</div>
+              <div class="cell-data">Carlos Mendoza</div>
+              <div class="cell-data">8 hrs</div>
+              <div class="cell-data">No disponible Lun/Jue tarde</div>
+            </div>
+            <div class="table-row">
+              <div class="cell-label">2</div>
+              <div class="cell-data">María López</div>
+              <div class="cell-data">9 hrs</div>
+              <div class="cell-data">Lun-Vie completo</div>
+            </div>
+          </div>
+        </div>
+
+        <div
+          style="
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin: 20px 0;
+          "
+        >
+          <h3 style="color: #667eea; margin-bottom: 15px">📖 Cursos/Grados</h3>
+          <div class="data-table">
+            <div class="table-header">
+              <div>Grado</div>
+              <div>Sección</div>
+              <div>Aula</div>
+              <div>Capacidad</div>
+            </div>
+            <div class="table-row">
+              <div class="cell-label">3</div>
+              <div class="cell-data">A</div>
+              <div class="cell-data">AULA_3A</div>
+              <div class="cell-data">30 alumnos</div>
+            </div>
+            <div class="table-row">
+              <div class="cell-label">3</div>
+              <div class="cell-data">B</div>
+              <div class="cell-data">AULA_3B</div>
+              <div class="cell-data">28 alumnos</div>
+            </div>
+            <div class="table-row">
+              <div class="cell-label">4</div>
+              <div class="cell-data">A</div>
+              <div class="cell-data">AULA_4A</div>
+              <div class="cell-data">32 alumnos</div>
+            </div>
+          </div>
+        </div>
+
+        <div
+          style="
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin: 20px 0;
+          "
+        >
+          <h3 style="color: #667eea; margin-bottom: 15px">
+            🎓 Bloques de Clases
+          </h3>
+          <div class="data-table">
+            <div class="table-header">
+              <div>ID</div>
+              <div>Docente</div>
+              <div>Materia</div>
+              <div>Duración</div>
+              <div>Grado</div>
+            </div>
+            <div class="table-row">
+              <div class="cell-label">0</div>
+              <div class="cell-data">Edwin (0)</div>
+              <div class="cell-data">Matemática</div>
+              <div class="cell-data">2 hrs</div>
+              <div class="cell-data">3A</div>
+            </div>
+            <div class="table-row">
+              <div class="cell-label">1</div>
+              <div class="cell-data">Edwin (0)</div>
+              <div class="cell-data">Matemática</div>
+              <div class="cell-data">2 hrs</div>
+              <div class="cell-data">3A</div>
+            </div>
+            <div class="table-row">
+              <div class="cell-label">2</div>
+              <div class="cell-data">Carlos (1)</div>
+              <div class="cell-data">Computación</div>
+              <div class="cell-data">3 hrs</div>
+              <div class="cell-data">3A</div>
+            </div>
+            <div class="table-row">
+              <div class="cell-label">3</div>
+              <div class="cell-data">Carlos (1)</div>
+              <div class="cell-data">Computación</div>
+              <div class="cell-data">2 hrs</div>
+              <div class="cell-data">3A</div>
+            </div>
+            <div class="table-row">
+              <div class="cell-label">4</div>
+              <div class="cell-data">María (2)</div>
+              <div class="cell-data">Comunicación</div>
+              <div class="cell-data">3 hrs</div>
+              <div class="cell-data">3B</div>
+            </div>
+            <div class="table-row">
+              <div class="cell-label">5</div>
+              <div class="cell-data">María (2)</div>
+              <div class="cell-data">Comunicación</div>
+              <div class="cell-data">2 hrs</div>
+              <div class="cell-data">3B</div>
+            </div>
+            <div class="table-row">
+              <div class="cell-label">6</div>
+              <div class="cell-data">Edwin (0)</div>
+              <div class="cell-data">Física</div>
+              <div class="cell-data">3 hrs</div>
+              <div class="cell-data">4A</div>
+            </div>
+            <div class="table-row">
+              <div class="cell-label">7</div>
+              <div class="cell-data">María (2)</div>
+              <div class="cell-data">Historia</div>
+              <div class="cell-data">2 hrs</div>
+              <div class="cell-data">4A</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ESTRUCTURA DEL CROMOSOMA -->
+      <div class="section">
+        <div class="section-title">
+          <span class="icon">🧬</span>
+          <span>2. Estructura del Cromosoma</span>
+        </div>
+
+        <div class="highlight-box">
+          <div class="highlight-title">💡 Configuración</div>
+          <div class="highlight-text">
+            <strong>Total de grados:</strong> 3 (3A, 3B, 4A)<br />
+            <strong>Horas por grado:</strong> 45 (Lunes a Viernes, 9 horas
+            pedagógicas por día)<br />
+            <strong>Longitud total del cromosoma:</strong> 45 × 3 =
+            <strong>135 genes</strong><br />
+            <strong>Cada gen:</strong> ID del bloque de clase (0-7) o -1 si está
+            vacío
+          </div>
+        </div>
+
+        <div class="cromosoma-display">
+          <div class="cromosoma-grado cromo-3a">
+            <div class="cromosoma-label">📍 GRADO 3A (Índices 0-44):</div>
+            <div class="cromosoma-valores">
+              <div class="cromosoma-gen gen-ocupado">0</div>
+              <div class="cromosoma-gen gen-ocupado">0</div>
+              <div class="cromosoma-gen gen-ocupado">2</div>
+              <div class="cromosoma-gen gen-ocupado">2</div>
+              <div class="cromosoma-gen gen-ocupado">2</div>
+              <div class="cromosoma-gen gen-ocupado">3</div>
+              <div class="cromosoma-gen gen-vacio">-1</div>
+              <div class="cromosoma-gen gen-vacio">-1</div>
+              <div class="cromosoma-gen gen-vacio">-1</div>
+              <div class="cromosoma-gen gen-ocupado">1</div>
+              <span
+                style="
+                  width: 100%;
+                  text-align: center;
+                  color: #666;
+                  margin-top: 5px;
+                "
+                >... 35 posiciones más ...</span
+              >
+            </div>
+          </div>
+
+          <div class="cromosoma-grado cromo-3b">
+            <div class="cromosoma-label">📍 GRADO 3B (Índices 45-89):</div>
+            <div class="cromosoma-valores">
+              <div class="cromosoma-gen gen-ocupado">4</div>
+              <div class="cromosoma-gen gen-ocupado">4</div>
+              <div class="cromosoma-gen gen-ocupado">4</div>
+              <div class="cromosoma-gen gen-ocupado">5</div>
+              <div class="cromosoma-gen gen-ocupado">5</div>
+              <div class="cromosoma-gen gen-vacio">-1</div>
+              <div class="cromosoma-gen gen-vacio">-1</div>
+              <div class="cromosoma-gen gen-vacio">-1</div>
+              <div class="cromosoma-gen gen-vacio">-1</div>
+              <div class="cromosoma-gen gen-vacio">-1</div>
+              <span
+                style="
+                  width: 100%;
+                  text-align: center;
+                  color: #666;
+                  margin-top: 5px;
+                "
+                >... 35 posiciones más ...</span
+              >
+            </div>
+          </div>
+
+          <div class="cromosoma-grado cromo-4a">
+            <div class="cromosoma-label">📍 GRADO 4A (Índices 90-134):</div>
+            <div class="cromosoma-valores">
+              <div class="cromosoma-gen gen-ocupado">6</div>
+              <div class="cromosoma-gen gen-ocupado">6</div>
+              <div class="cromosoma-gen gen-ocupado">6</div>
+              <div class="cromosoma-gen gen-ocupado">7</div>
+              <div class="cromosoma-gen gen-ocupado">7</div>
+              <div class="cromosoma-gen gen-vacio">-1</div>
+              <div class="cromosoma-gen gen-vacio">-1</div>
+              <div class="cromosoma-gen gen-vacio">-1</div>
+              <div class="cromosoma-gen gen-vacio">-1</div>
+              <div class="cromosoma-gen gen-vacio">-1</div>
+              <span
+                style="
+                  width: 100%;
+                  text-align: center;
+                  color: #666;
+                  margin-top: 5px;
+                "
+                >... 35 posiciones más ...</span
+              >
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- EVALUACIÓN DE FITNESS -->
+      <div class="section">
+        <div class="section-title">
+          <span class="icon">🎯</span>
+          <span>3. Evaluación de Fitness</span>
+        </div>
+
+        <div class="tab-buttons">
+          <button class="tab-btn active" onclick="cambiarTab('huecos')">
+            Huecos
+          </button>
+          <button class="tab-btn" onclick="cambiarTab('conflictos')">
+            Conflictos
+          </button>
+          <button class="tab-btn" onclick="cambiarTab('horas')">Horas</button>
+          <button class="tab-btn" onclick="cambiarTab('disponibilidad')">
+            Disponibilidad
+          </button>
+        </div>
+
+        <!-- HUECOS -->
+        <div id="huecos" class="tab-content active">
+          <div class="paso paso-1">
+            <div class="paso-numero">1</div>
+            <div class="paso-titulo">Cálculo de Huecos - Grado 3A</div>
+            <div class="paso-contenido">
+              <p><strong>Analizando horario del Grado 3A:</strong></p>
+              <div class="horario-visual">
+                <div class="hora-header"></div>
+                <div class="hora-header">Lun</div>
+                <div class="hora-header">Mar</div>
+                <div class="hora-header">Mié</div>
+                <div class="hora-header">Jue</div>
+                <div class="hora-header">Vie</div>
+
+                <div class="hora-time">1ª</div>
+                <div class="hora-clase">Mat(E)</div>
+                <div class="hora-vacia">-</div>
+                <div class="hora-vacia">-</div>
+                <div class="hora-vacia">-</div>
+                <div class="hora-vacia">-</div>
+
+                <div class="hora-time">2ª</div>
+                <div class="hora-clase">Mat(E)</div>
+                <div class="hora-vacia">-</div>
+                <div class="hora-vacia">-</div>
+                <div class="hora-vacia">-</div>
+                <div class="hora-clase">Mat(E)</div>
+
+                <div class="hora-time">3ª</div>
+                <div class="hora-clase">Comp(C)</div>
+                <div class="hora-vacia">-</div>
+                <div class="hora-vacia">-</div>
+                <div class="hora-vacia">-</div>
+                <div class="hora-vacia">-</div>
+
+                <div class="hora-time">4ª</div>
+                <div class="hora-clase">Comp(C)</div>
+                <div class="hora-vacia">-</div>
+                <div class="hora-vacia">-</div>
+                <div class="hora-vacia">-</div>
+                <div class="hora-vacia">-</div>
+
+                <div class="hora-time">5ª</div>
+                <div class="hora-clase">Comp(C)</div>
+                <div class="hora-vacia">-</div>
+                <div class="hora-vacia">-</div>
+                <div class="hora-vacia">-</div>
+                <div class="hora-vacia">-</div>
+
+                <div class="hora-time">6ª</div>
+                <div class="hora-clase">Comp(C)</div>
+                <div class="hora-vacia">-</div>
+                <div class="hora-vacia">-</div>
+                <div class="hora-vacia">-</div>
+                <div class="hora-vacia">-</div>
+
+                <div class="hora-time">7ª</div>
+                <div class="hora-vacia">-</div>
+                <div class="hora-vacia">-</div>
+                <div class="hora-vacia">-</div>
+                <div class="hora-vacia">-</div>
+                <div class="hora-vacia">-</div>
+
+                <div class="hora-time">8ª</div>
+                <div class="hora-vacia">-</div>
+                <div class="hora-vacia">-</div>
+                <div class="hora-vacia">-</div>
+                <div class="hora-vacia">-</div>
+                <div class="hora-vacia">-</div>
+
+                <div class="hora-time">9ª</div>
+                <div class="hora-vacia">-</div>
+                <div class="hora-vacia">-</div>
+                <div class="hora-vacia">-</div>
+                <div class="hora-vacia">-</div>
+                <div class="hora-vacia">-</div>
+              </div>
+
+              <div class="formula-box">
+                <div style="margin-bottom: 10px">
+                  <strong>Análisis por docente:</strong>
+                </div>
+                <div style="text-align: left; line-height: 1.8">
+                  <strong>Edwin García (Matemática):</strong><br />
+                  - Lunes: bloques 1, 2 → rango=2, ocupados=2, huecos=<span
+                    style="color: #4caf50"
+                    >0</span
+                  ><br />
+                  - Viernes: bloque 2 → solo 1 bloque, no se cuenta<br />
+                  <strong>Huecos Edwin = 0</strong><br /><br />
+
+                  <strong>Carlos Mendoza (Computación):</strong><br />
+                  - Lunes: bloques 3, 4, 5, 6 → rango=4, ocupados=4,
+                  huecos=<span style="color: #4caf50">0</span><br />
+                  <strong>Huecos Carlos = 0</strong><br /><br />
+
+                  <strong>Total P₁ (Huecos) = 0</strong>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- CONFLICTOS -->
+        <div id="conflictos" class="tab-content">
+          <div class="paso paso-2">
+            <div class="paso-numero">2</div>
+            <div class="paso-titulo">Cálculo de Conflictos</div>
+            <div class="paso-contenido">
+              <p>
+                <strong
+                  >Verificando si múltiples docentes usan misma
+                  aula/hora:</strong
+                >
+              </p>
+              <div class="formula-box">
+                <div style="text-align: left; line-height: 1.8">
+                  <strong>Análisis de ocupación:</strong><br />
+                  (AULA_3A, Lunes, 1ª hora) → [Edwin] = 1 docente ✓<br />
+                  (AULA_3A, Lunes, 2ª hora) → [Edwin] = 1 docente ✓<br />
+                  (AULA_3A, Lunes, 3ª hora) → [Carlos] = 1 docente ✓<br />
+                  (AULA_3A, Viernes, 2ª hora) → [Edwin] = 1 docente ✓<br />
+                  (AULA_3B, Lunes, 1ª hora) → [María] = 1 docente ✓<br />
+                  (AULA_4A, Lunes, 1ª hora) → [Edwin] = 1 docente ✓<br /><br />
+
+                  ✅
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

@@ -3,52 +3,74 @@ import pygad
 import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
-from typing import List, Dict, Tuple
+from typing import List, Dict, Tuple, Set
 from dataclasses import dataclass
 
 # ========== CONFIGURACIÓN DEL HORARIO ==========
 BLOQUES = [
     "07:20-08:05", "08:05-08:50", "08:50-09:35", "09:35-10:20",
+    "10:20-10:40", "10:40-11:25", "11:25-12:10", "12:10-12:55",
+    "12:55-13:25", "13:25-14:10", "14:10-14:55"
+]
+HORAS_PEDAGOGICAS = [
+    "07:20-08:05", "08:05-08:50", "08:50-09:35", "09:35-10:20",
     "10:40-11:25", "11:25-12:10", "12:10-12:55",
     "13:25-14:10", "14:10-14:55"
 ]
-DIAS = ["lunes", "martes", "miércoles", "jueves", "viernes"]
-NUM_BLOQUES = 9
+RECREO_INICIO = 4  # Índice 4 = 10:20-10:40
+ALMUERZO_INICIO = 8  # Índice 8 = 12:55-13:25
+HORAS_POR_DIA = 9  # Horas pedagógicas por día
 NUM_DIAS = 5
 
 @dataclass
 class Docente:
-    id: int  # Cambio a int para indexación en NumPy
+    id: int
     nombre: str
     tipo: str
     horas_requeridas: int
     disponibilidad: np.ndarray  # Shape: (5 días, 9 bloques)
 
 @dataclass
-class Clase:
+class Grado:
+    """Representa un grado-sección (3A, 3B, etc.)"""
+    id: int
+    numero: int  # 3, 4, 5, etc.
+    seccion: str  # A, B, C, etc.
+    aula: str
+    
+    @property
+    def nombre(self):
+        return f"{self.numero}{self.seccion}"
+
+@dataclass
+class Bloque:
+    """Representa una clase: 1-3 horas consecutivas de una materia con un docente para un grado"""
     id: int
     docente_id: int
-    curso: str
-    grado: int
-    seccion: str
-    horas_semanales: int
-    aula: str  # Aula fija por grado-sección
+    grado_id: int
+    materia: str
+    duracion: int  # 1, 2 o 3 horas pedagógicas
 
-class GeneticScheduler:
+
+class GeneticSchedulerV2:
     """
-    Codificación del Cromosoma:
-    - Cromosoma: vector 1D de longitud = suma(horas_semanales de todas las clases)
-    - Cada gen representa: (día, bloque) donde se asigna esa hora de clase
-    - Gen = día * NUM_BLOQUES + bloque  (valor entre 0 y 44)
+    Nueva estructura:
+    - Cromosoma por grado: array de 45 posiciones (0-44)
+    - Cada posición = 1 hora pedagógica en el horario semanal
+    - Valor en posición = ID del bloque de clase (o -1 si vacío)
+    - Cromosoma total = 45 * número_de_grados (135 para 3 grados)
     
-    Ejemplo: gen=15 significa día=1 (martes), bloque=6
+    Índice a (día, hora_pedagogica):
+        día = índice // 9
+        hora = índice % 9
     """
     
-    def __init__(self, docentes: List[Docente], clases: List[Clase], 
-                 grados_secciones: List[str], num_generaciones: int = 100):
+    def __init__(self, docentes: List[Docente], grados: List[Grado], 
+                 bloques: List[Bloque], num_generaciones: int = 100):
         self.docentes = {d.id: d for d in docentes}
-        self.clases = clases
-        self.grados_secciones = grados_secciones
+        self.grados = {g.id: g for g in grados}
+        self.bloques = {b.id: b for b in bloques}
+        self.grados_secciones = [g.nombre for g in grados]  # Definir primero
         self.num_generaciones = num_generaciones
         
         # Pesos de penalización
@@ -57,34 +79,34 @@ class GeneticScheduler:
         self.w_horas = 500.0
         self.w_disponibilidad = 800.0
         
-        # Calcular longitud del cromosoma
-        self.longitud_cromosoma = sum(c.horas_semanales for c in clases)
+        # Cromosoma: 45 posiciones por grado
+        self.horas_por_grado = 45
+        self.longitud_cromosoma = self.horas_por_grado * len(self.grados_secciones)  # Ahora sí existe
         
-        # Crear mapeo clase_id -> índices en cromosoma
-        self.clase_indices = {}
-        idx = 0
-        for clase in clases:
-            self.clase_indices[clase.id] = list(range(idx, idx + clase.horas_semanales))
-            idx += clase.horas_semanales
-        
-        print(f"Cromosoma inicializado: {self.longitud_cromosoma} genes")
-        print(f"Configuración: {len(clases)} clases, {len(docentes)} docentes")
+        print(f"🧬 Cromosoma inicializado:")
+        print(f"   - Horas por grado: {self.horas_por_grado}")
+        print(f"   - Grados: {len(self.grados_secciones)}")
+        print(f"   - Longitud total: {self.longitud_cromosoma}")
+        print(f"   - Bloques disponibles: {len(bloques)}")
     
-    def decodificar_gen(self, gen_valor: int) -> Tuple[int, int]:
-        """Convierte valor del gen a (día, bloque)"""
-        dia = gen_valor // NUM_BLOQUES
-        bloque = gen_valor % NUM_BLOQUES
-        return int(dia), int(bloque)
+    def indice_a_dia_hora(self, indice: int) -> Tuple[int, int]:
+        """Convierte índice (0-44) a (día, hora_pedagógica)"""
+        dia = indice // HORAS_POR_DIA
+        hora = indice % HORAS_POR_DIA
+        return dia, hora
     
-    def codificar_gen(self, dia: int, bloque: int) -> int:
-        """Convierte (día, bloque) a valor del gen"""
-        return dia * NUM_BLOQUES + bloque
+    def dia_hora_a_indice(self, dia: int, hora: int) -> int:
+        """Convierte (día, hora_pedagógica) a índice (0-44)"""
+        return dia * HORAS_POR_DIA + hora
+    
+    def obtener_grado_seccion_de_indice(self, indice_global: int) -> Tuple[str, int]:
+        """Obtiene grado-sección e índice local del cromosoma global"""
+        grado_idx = indice_global // self.horas_por_grado
+        indice_local = indice_global % self.horas_por_grado
+        return self.grados_secciones[grado_idx], indice_local
     
     def fitness_function(self, ga_instance, solution, solution_idx):
-        """
-        Función de fitness para PyGAD (a MAXIMIZAR)
-        Retornamos el negativo de la penalización total
-        """
+        """Función de fitness para PyGAD (a MAXIMIZAR)"""
         penalizacion_total = (
             self.w_huecos * self._calc_huecos(solution) +
             self.w_conflictos * self._calc_conflictos(solution) +
@@ -92,74 +114,97 @@ class GeneticScheduler:
             self.w_disponibilidad * self._calc_disponibilidad(solution)
         )
         
-        # PyGAD maximiza, así que retornamos el negativo
         return -penalizacion_total
     
     def _calc_huecos(self, cromosoma: np.ndarray) -> float:
         """
-        P_huecos = Σ_docentes Σ_días (bloque_max - bloque_min + 1 - bloques_ocupados)
+        Penaliza bloques vacíos entre la primera y última clase de un docente por día
         """
         penalizacion = 0.0
         
         for docente_id in self.docentes.keys():
-            # Obtener todas las asignaciones de este docente
-            asignaciones = []
-            for clase in self.clases:
-                if clase.docente_id == docente_id:
-                    indices = self.clase_indices[clase.id]
-                    for idx in indices:
-                        dia, bloque = self.decodificar_gen(int(cromosoma[idx]))
-                        if 0 <= dia < NUM_DIAS:  # Validación
-                            asignaciones.append((dia, bloque))
+            # Agrupar asignaciones del docente por día y grado
+            asignaciones_por_dia = {}  # {(grado, día): [horas]}
             
-            # Agrupar por día y calcular huecos
-            for dia in range(NUM_DIAS):
-                bloques_dia = sorted([b for d, b in asignaciones if d == dia])
+            for grado_idx, grado_seccion in enumerate(self.grados_secciones):
+                inicio = grado_idx * self.horas_por_grado
+                fin = inicio + self.horas_por_grado
+                grado_cromosoma = cromosoma[inicio:fin]
                 
-                if len(bloques_dia) > 1:
-                    rango = bloques_dia[-1] - bloques_dia[0] + 1
-                    huecos = rango - len(bloques_dia)
+                for indice_local, bloque_id in enumerate(grado_cromosoma):
+                    bloque_id = int(bloque_id)
+                    if bloque_id >= 0 and bloque_id in self.bloques:
+                        bloque = self.bloques[bloque_id]
+                        if bloque.docente_id == docente_id:
+                            dia, hora = self.indice_a_dia_hora(indice_local)
+                            key = (grado_seccion, dia)
+                            if key not in asignaciones_por_dia:
+                                asignaciones_por_dia[key] = []
+                            asignaciones_por_dia[key].append(hora)
+            
+            # Calcular huecos
+            for (grado, dia), horas in asignaciones_por_dia.items():
+                if len(horas) > 1:
+                    horas_sorted = sorted(horas)
+                    rango = horas_sorted[-1] - horas_sorted[0] + 1
+                    huecos = rango - len(horas_sorted)
                     penalizacion += huecos
         
         return penalizacion
     
     def _calc_conflictos(self, cromosoma: np.ndarray) -> float:
         """
-        P_conflictos = Σ max(0, N_aula_dia_bloque - 1)
-        Detecta múltiples docentes en misma aula/horario
+        Penaliza cuando dos docentes tienen clases en el mismo aula/horario
         """
         penalizacion = 0.0
-        ocupacion = {}  # (aula, dia, bloque) -> count
+        ocupacion = {}  # (aula, día, hora) -> lista de docente_ids
         
-        for clase in self.clases:
-            indices = self.clase_indices[clase.id]
-            for idx in indices:
-                dia, bloque = self.decodificar_gen(int(cromosoma[idx]))
-                if 0 <= dia < NUM_DIAS and 0 <= bloque < NUM_BLOQUES:
-                    key = (clase.aula, dia, bloque)
-                    ocupacion[key] = ocupacion.get(key, 0) + 1
+        for grado_idx, grado_seccion in enumerate(self.grados_secciones):
+            inicio = grado_idx * self.horas_por_grado
+            fin = inicio + self.horas_por_grado
+            grado_cromosoma = cromosoma[inicio:fin]
+            
+            grado = self.grados[grado_idx]
+            
+            for indice_local, bloque_id in enumerate(grado_cromosoma):
+                bloque_id = int(bloque_id)
+                if bloque_id >= 0 and bloque_id in self.bloques:
+                    bloque = self.bloques[bloque_id]
+                    
+                    dia, hora = self.indice_a_dia_hora(indice_local)
+                    key = (grado.aula, dia, hora)
+                    
+                    if key not in ocupacion:
+                        ocupacion[key] = []
+                    ocupacion[key].append((grado_seccion, bloque.docente_id))
         
-        for count in ocupacion.values():
-            if count > 1:
-                penalizacion += (count - 1) * 10  # Penalización multiplicada
+        # Detectar conflictos: múltiples docentes en misma aula/hora
+        for key, docentes_lista in ocupacion.items():
+            if len(docentes_lista) > 1:
+                # Verificar si hay docentes diferentes
+                docentes_unicos = set(d_id for _, d_id in docentes_lista)
+                if len(docentes_unicos) > 1:
+                    penalizacion += (len(docentes_unicos) - 1) * 10
         
         return penalizacion
     
     def _calc_horas(self, cromosoma: np.ndarray) -> float:
         """
-        P_horas = Σ_docentes |H_asignadas - H_requeridas|
+        Penaliza diferencias entre horas asignadas y horas requeridas de cada docente
         """
         penalizacion = 0.0
         horas_asignadas = {d_id: 0 for d_id in self.docentes.keys()}
         
-        for clase in self.clases:
-            indices = self.clase_indices[clase.id]
-            horas_validas = 0
-            for idx in indices:
-                dia, bloque = self.decodificar_gen(int(cromosoma[idx]))
-                if 0 <= dia < NUM_DIAS and 0 <= bloque < NUM_BLOQUES:
-                    horas_validas += 1
-            horas_asignadas[clase.docente_id] += horas_validas
+        for grado_idx in range(len(self.grados_secciones)):
+            inicio = grado_idx * self.horas_por_grado
+            fin = inicio + self.horas_por_grado
+            grado_cromosoma = cromosoma[inicio:fin]
+            
+            for bloque_id in grado_cromosoma:
+                bloque_id = int(bloque_id)
+                if bloque_id >= 0 and bloque_id in self.bloques:
+                    bloque = self.bloques[bloque_id]
+                    horas_asignadas[bloque.docente_id] += bloque.duracion
         
         for docente_id, docente in self.docentes.items():
             diferencia = abs(horas_asignadas[docente_id] - docente.horas_requeridas)
@@ -169,61 +214,69 @@ class GeneticScheduler:
     
     def _calc_disponibilidad(self, cromosoma: np.ndarray) -> float:
         """
-        P_disponibilidad = Σ violaciones de disponibilidad del docente
+        Penaliza asignaciones en días/horas donde docentes no están disponibles
         """
         penalizacion = 0.0
         
-        for clase in self.clases:
-            docente = self.docentes[clase.docente_id]
-            indices = self.clase_indices[clase.id]
+        for grado_idx in range(len(self.grados_secciones)):
+            inicio = grado_idx * self.horas_por_grado
+            fin = inicio + self.horas_por_grado
+            grado_cromosoma = cromosoma[inicio:fin]
             
-            for idx in indices:
-                dia, bloque = self.decodificar_gen(int(cromosoma[idx]))
-                if 0 <= dia < NUM_DIAS and 0 <= bloque < NUM_BLOQUES:
-                    if not docente.disponibilidad[dia, bloque]:
+            for indice_local, bloque_id in enumerate(grado_cromosoma):
+                bloque_id = int(bloque_id)
+                if bloque_id >= 0 and bloque_id in self.bloques:
+                    bloque = self.bloques[bloque_id]
+                    docente = self.docentes[bloque.docente_id]
+                    
+                    dia, hora = self.indice_a_dia_hora(indice_local)
+                    if not docente.disponibilidad[dia, hora]:
                         penalizacion += 1
         
         return penalizacion
     
     def crear_poblacion_inicial(self, num_soluciones: int) -> np.ndarray:
-        """
-        Genera población inicial con heurística semi-aleatoria
-        """
+        """Genera población inicial respetando disponibilidad"""
         poblacion = []
         
         for _ in range(num_soluciones):
-            cromosoma = np.zeros(self.longitud_cromosoma, dtype=int)
+            cromosoma = -np.ones(self.longitud_cromosoma, dtype=int)
             
-            for clase in self.clases:
-                docente = self.docentes[clase.docente_id]
-                indices = self.clase_indices[clase.id]
+            # Intentar asignar bloques respetando disponibilidad
+            for grado_idx in range(len(self.grados_secciones)):
+                inicio = grado_idx * self.horas_por_grado
+                fin = inicio + self.horas_por_grado
                 
-                # Obtener slots disponibles del docente
-                slots_disponibles = []
-                for dia in range(NUM_DIAS):
-                    for bloque in range(NUM_BLOQUES):
-                        if docente.disponibilidad[dia, bloque]:
-                            slots_disponibles.append(self.codificar_gen(dia, bloque))
-                
-                # Asignar aleatoriamente pero respetando disponibilidad
-                if len(slots_disponibles) >= len(indices):
-                    asignados = np.random.choice(slots_disponibles, size=len(indices), replace=False)
-                    cromosoma[indices] = asignados
-                else:
-                    # Si no hay suficientes slots, usar aleatorios (será penalizado)
-                    cromosoma[indices] = np.random.randint(0, NUM_DIAS * NUM_BLOQUES, size=len(indices))
+                # Slots disponibles para este grado
+                for bloque in self.bloques.values():
+                    docente = self.docentes[bloque.docente_id]
+                    
+                    # Intentar colocar el bloque en posiciones aleatorias válidas
+                    for intento in range(10):
+                        indice_local = np.random.randint(0, self.horas_por_grado - bloque.duracion + 1)
+                        
+                        # Verificar disponibilidad para todas las horas del bloque
+                        valido = True
+                        for h in range(bloque.duracion):
+                            dia, hora = self.indice_a_dia_hora(indice_local + h)
+                            if not docente.disponibilidad[dia, hora]:
+                                valido = False
+                                break
+                        
+                        if valido:
+                            # Asignar el bloque
+                            for h in range(bloque.duracion):
+                                cromosoma[inicio + indice_local + h] = bloque.id
+                            break
             
             poblacion.append(cromosoma)
         
         return np.array(poblacion)
     
     def ejecutar(self):
-        """Ejecuta el algoritmo genético con PyGAD"""
+        """Ejecuta el algoritmo genético"""
+        gene_space = list(range(-1, len(self.bloques)))
         
-        # Definir rangos de genes (0 a 44: 5 días * 9 bloques - 1)
-        gene_space = list(range(NUM_DIAS * NUM_BLOQUES))
-        
-        # Configurar PyGAD
         ga_instance = pygad.GA(
             num_generations=self.num_generaciones,
             num_parents_mating=10,
@@ -243,274 +296,117 @@ class GeneticScheduler:
             suppress_warnings=True
         )
         
-        # Ejecutar
         print("\n🧬 Iniciando optimización genética...")
         ga_instance.run()
         
-        # Obtener mejor solución
         solution, solution_fitness, solution_idx = ga_instance.best_solution()
         
         print(f"\n✅ Optimización completada!")
-        print(f"Fitness de mejor solución: {solution_fitness:.2f}")
-        print(f"Penalización total: {-solution_fitness:.2f}")
-        
-        # Desglose de penalizaciones
-        print("\n📊 Desglose de penalizaciones:")
-        print(f"  - Huecos: {self._calc_huecos(solution):.0f}")
-        print(f"  - Conflictos de aula: {self._calc_conflictos(solution):.0f}")
-        print(f"  - Horas incorrectas: {self._calc_horas(solution):.0f}")
-        print(f"  - Disponibilidad violada: {self._calc_disponibilidad(solution):.0f}")
-        
-        # Gráfica de evolución
-        ga_instance.plot_fitness()
+        print(f"Fitness: {solution_fitness:.2f}")
+        print(f"Penalización: {-solution_fitness:.2f}")
         
         return solution, ga_instance
     
-    def generar_horarios_docentes(self, solucion: np.ndarray) -> Dict[int, pd.DataFrame]:
-        """
-        Genera DataFrames con el horario de cada docente
-        Formato: Filas = Bloques horarios, Columnas = Días
-        """
+    def generar_horarios_por_grado(self, solucion: np.ndarray) -> Dict[str, pd.DataFrame]:
+        """Genera DataFrames de horarios por grado"""
         horarios = {}
         
-        for docente_id, docente in self.docentes.items():
-            # Crear DataFrame vacío
-            horario_df = pd.DataFrame(
-                index=BLOQUES,
-                columns=DIAS
+        for grado_idx, grado_seccion in enumerate(self.grados_secciones):
+            inicio = grado_idx * self.horas_por_grado
+            fin = inicio + self.horas_por_grado
+            grado_cromosoma = solucion[inicio:fin]
+            
+            # Crear matriz horas × días (transponemos para pandas)
+            horario_matrix = np.empty((HORAS_POR_DIA, NUM_DIAS), dtype=object)
+            horario_matrix[:] = ""
+            
+            for indice_local, bloque_id in enumerate(grado_cromosoma):
+                bloque_id = int(bloque_id)
+                if bloque_id >= 0 and bloque_id in self.bloques:
+                    bloque = self.bloques[bloque_id]
+                    docente = self.docentes[bloque.docente_id]
+                    dia, hora = self.indice_a_dia_hora(indice_local)
+                    
+                    info = f"{bloque.materia}\n{docente.nombre}"
+                    if horario_matrix[hora, dia]:
+                        horario_matrix[hora, dia] += f"\n⚠️{info}"
+                    else:
+                        horario_matrix[hora, dia] = info
+            
+            # Convertir a DataFrame
+            df = pd.DataFrame(
+                horario_matrix,
+                index=HORAS_PEDAGOGICAS,
+                columns=["Lunes", "Martes", "Miércoles", "Jueves", "Viernes"]
             )
-            horario_df = horario_df.fillna("")
             
-            # Llenar con las asignaciones
-            for clase in self.clases:
-                if clase.docente_id == docente_id:
-                    indices = self.clase_indices[clase.id]
-                    for idx in indices:
-                        dia, bloque = self.decodificar_gen(int(solucion[idx]))
-                        if 0 <= dia < NUM_DIAS and 0 <= bloque < NUM_BLOQUES:
-                            dia_nombre = DIAS[dia]
-                            bloque_horario = BLOQUES[bloque]
-                            
-                            # Formato: "Curso - Grado Sección (Aula)"
-                            info = f"{clase.curso}\n{clase.grado}{clase.seccion} ({clase.aula})"
-                            
-                            # Si ya hay algo en ese slot, concatenar (error a detectar)
-                            celda_actual = horario_df.loc[bloque_horario, dia_nombre]
-                            if celda_actual and str(celda_actual).strip():
-                                horario_df.loc[bloque_horario, dia_nombre] = str(celda_actual) + f"\n⚠️ {info}"
-                            else:
-                                horario_df.loc[bloque_horario, dia_nombre] = info
-            
-            horarios[docente_id] = horario_df
+            horarios[grado_seccion] = df
         
         return horarios
     
-    def visualizar_horarios(self, solucion: np.ndarray, guardar: bool = True):
-        """
-        Genera visualización gráfica de los horarios por docente
-        """
-        horarios = self.generar_horarios_docentes(solucion)
-        
-        for docente_id, horario_df in horarios.items():
-            docente = self.docentes[docente_id]
-            
-            # Crear figura
-            fig, ax = plt.subplots(figsize=(14, 10))
-            
-            # Preparar matriz para visualización
-            matriz_ocupacion = np.zeros((NUM_BLOQUES, NUM_DIAS))
-            
-            for i, bloque in enumerate(BLOQUES):
-                for j, dia in enumerate(DIAS):
-                    celda = horario_df.loc[bloque, dia]
-                    if celda and str(celda).strip():
-                        matriz_ocupacion[i, j] = 1
-            
-            # Crear cuadrícula manualmente con matplotlib
-            for i in range(NUM_BLOQUES):
-                for j in range(NUM_DIAS):
-                    # Color según ocupación
-                    if matriz_ocupacion[i, j] == 1:
-                        color = '#4CAF50'  # Verde para ocupado
-                    else:
-                        color = '#f0f0f0'  # Gris claro para vacío
-                    
-                    # Dibujar rectángulo
-                    rect = Rectangle((j, NUM_BLOQUES - i - 1), 1, 1, 
-                                    facecolor=color, edgecolor='white', linewidth=2)
-                    ax.add_patch(rect)
-                    
-                    # Agregar texto
-                    celda_texto = horario_df.loc[BLOQUES[i], DIAS[j]]
-                    if celda_texto and str(celda_texto).strip():
-                        ax.text(j + 0.5, NUM_BLOQUES - i - 0.5, str(celda_texto),
-                               ha='center', va='center', fontsize=9, 
-                               wrap=True, color='white', weight='bold')
-            
-            # Líneas para recreo y almuerzo
-            ax.axhline(y=NUM_BLOQUES - 4, color='#FF9800', linewidth=4, 
-                      label='Recreo (10:20-10:40)', zorder=10)
-            ax.axhline(y=NUM_BLOQUES - 7, color='#FF5722', linewidth=4, 
-                      label='Almuerzo (12:55-13:25)', zorder=10)
-            
-            # Configurar ejes
-            ax.set_xlim(0, NUM_DIAS)
-            ax.set_ylim(0, NUM_BLOQUES)
-            ax.set_xticks(np.arange(NUM_DIAS) + 0.5)
-            ax.set_xticklabels([d.upper() for d in DIAS], fontsize=11, weight='bold')
-            ax.set_yticks(np.arange(NUM_BLOQUES) + 0.5)
-            ax.set_yticklabels(BLOQUES[::-1], fontsize=10)
-            
-            # Título
-            ax.set_title(
-                f'HORARIO: {docente.nombre} ({docente.tipo.upper()})\n'
-                f'Horas Asignadas: {self._contar_horas_docente(solucion, docente_id)} / '
-                f'{docente.horas_requeridas}',
-                fontsize=16,
-                fontweight='bold',
-                pad=20
-            )
-            
-            ax.set_xlabel('DÍA', fontsize=12, fontweight='bold')
-            ax.set_ylabel('HORARIO', fontsize=12, fontweight='bold')
-            ax.legend(loc='upper left', bbox_to_anchor=(1.02, 1))
-            
-            # Quitar bordes
-            ax.spines['top'].set_visible(False)
-            ax.spines['right'].set_visible(False)
-            ax.spines['bottom'].set_visible(False)
-            ax.spines['left'].set_visible(False)
-            ax.tick_params(left=False, bottom=False)
-            
-            plt.tight_layout()
-            
-            if guardar:
-                nombre_archivo = f'horario_docente_{docente_id}_{docente.nombre.replace(" ", "_")}.png'
-                plt.savefig(nombre_archivo, dpi=300, bbox_inches='tight')
-                print(f"✅ Guardado: {nombre_archivo}")
-            
-            plt.show()
-            plt.close()
-    
-    def _contar_horas_docente(self, solucion: np.ndarray, docente_id: int) -> int:
-        """Cuenta las horas asignadas a un docente"""
-        total = 0
-        for clase in self.clases:
-            if clase.docente_id == docente_id:
-                indices = self.clase_indices[clase.id]
-                for idx in indices:
-                    dia, bloque = self.decodificar_gen(int(solucion[idx]))
-                    if 0 <= dia < NUM_DIAS and 0 <= bloque < NUM_BLOQUES:
-                        total += 1
-        return total
-    
-    def exportar_excel(self, solucion: np.ndarray, nombre_archivo: str = "horarios_docentes.xlsx"):
-        """
-        Exporta todos los horarios a un archivo Excel con una hoja por docente
-        """
-        horarios = self.generar_horarios_docentes(solucion)
-        
-        with pd.ExcelWriter(nombre_archivo, engine='openpyxl') as writer:
-            for docente_id, horario_df in horarios.items():
-                docente = self.docentes[docente_id]
-                nombre_hoja = f"{docente.nombre[:25]}"  # Excel limita a 31 caracteres
-                
-                # Agregar información del docente
-                info_df = pd.DataFrame({
-                    'Información': [
-                        f'Docente: {docente.nombre}',
-                        f'Tipo: {docente.tipo}',
-                        f'Horas requeridas: {docente.horas_requeridas}',
-                        f'Horas asignadas: {self._contar_horas_docente(solucion, docente_id)}',
-                        ''
-                    ]
-                })
-                
-                info_df.to_excel(writer, sheet_name=nombre_hoja, index=False, startrow=0)
-                horario_df.to_excel(writer, sheet_name=nombre_hoja, startrow=6)
-        
-        print(f"📊 Horarios exportados a: {nombre_archivo}")
-    
-    def imprimir_resumen(self, solucion: np.ndarray):
-        """Imprime un resumen en consola de todos los horarios"""
-        horarios = self.generar_horarios_docentes(solucion)
+    def imprimir_horarios(self, solucion: np.ndarray):
+        """Imprime horarios por grado"""
+        horarios = self.generar_horarios_por_grado(solucion)
         
         print("\n" + "="*100)
-        print("📚 HORARIOS GENERADOS POR DOCENTE")
+        print("📚 HORARIOS POR GRADO")
         print("="*100)
         
-        for docente_id, horario_df in horarios.items():
-            docente = self.docentes[docente_id]
-            horas_asignadas = self._contar_horas_docente(solucion, docente_id)
-            
+        for grado_seccion, df in horarios.items():
             print(f"\n{'='*100}")
-            print(f"👤 DOCENTE: {docente.nombre.upper()} ({docente.tipo})")
-            print(f"⏱️  HORAS: {horas_asignadas}/{docente.horas_requeridas}")
+            print(f"📖 GRADO: {grado_seccion}")
             print(f"{'='*100}")
-            print(horario_df.to_string())
+            print(df.to_string())
             print()
 
 
 # ========== EJEMPLO DE USO ==========
 if __name__ == "__main__":
-    # Crear matriz de disponibilidad (5 días x 9 bloques)
-    disponibilidad_completa = np.ones((NUM_DIAS, NUM_BLOQUES), dtype=bool)
+    # Disponibilidad
+    disponibilidad_completa = np.ones((NUM_DIAS, HORAS_POR_DIA), dtype=bool)
+    disponibilidad_parcial = np.ones((NUM_DIAS, HORAS_POR_DIA), dtype=bool)
+    disponibilidad_parcial[0, 5:] = False  # Lunes tarde
+    disponibilidad_parcial[3, 5:] = False  # Jueves tarde
     
-    disponibilidad_parcial = np.ones((NUM_DIAS, NUM_BLOQUES), dtype=bool)
-    disponibilidad_parcial[0, 5:] = False  # Lunes tarde no disponible
-    disponibilidad_parcial[3, 5:] = False  # Jueves tarde no disponible
-    
-    # Crear docentes
+    # Docentes
     docentes = [
-        Docente(
-            id=0,
-            nombre="Edwin García",
-            tipo="nombrado",
-            horas_requeridas=12,  # Ajustado para prueba
-            disponibilidad=disponibilidad_completa
-        ),
-        Docente(
-            id=1,
-            nombre="Carlos Mendoza",
-            tipo="contratado",
-            horas_requeridas=10,
-            disponibilidad=disponibilidad_parcial
-        ),
-        Docente(
-            id=2,
-            nombre="María López",
-            tipo="nombrado",
-            horas_requeridas=8,
-            disponibilidad=disponibilidad_completa
-        )
+        Docente(0, "Edwin García", "nombrado", 10, disponibilidad_completa),
+        Docente(1, "Carlos Mendoza", "contratado", 8, disponibilidad_parcial),
+        Docente(2, "María López", "nombrado", 9, disponibilidad_completa),
     ]
     
-    # Crear clases (simplificado para 3 grados)
-    clases = [
-        Clase(0, 0, "Matemática", 3, "A", 4, "AULA_3A"),
-        Clase(1, 0, "Matemática", 3, "B", 4, "AULA_3B"),
-        Clase(2, 1, "Computación", 3, "A", 3, "AULA_3A"),
-        Clase(3, 1, "Computación", 4, "A", 3, "AULA_4A"),
-        Clase(4, 2, "Comunicación", 3, "B", 4, "AULA_3B"),
-        Clase(5, 0, "Física", 4, "A", 4, "AULA_4A"),
-        Clase(6, 2, "Historia", 3, "A", 4, "AULA_3A"),
+    # Grados (contenedores de estudiantes)
+    grados = [
+        Grado(0, 3, "A", "AULA_3A"),
+        Grado(1, 3, "B", "AULA_3B"),
+        Grado(2, 4, "A", "AULA_4A"),
     ]
     
-    # Ejecutar optimización
-    scheduler = GeneticScheduler(
+    # Bloques de clases (1-3 horas)
+    # Cada bloque define: qué docente enseña qué materia en qué grado
+    bloques = [
+        # Grado 3A
+        Bloque(0, docente_id=0, grado_id=0, materia="Matemática", duracion=2),
+        Bloque(1, docente_id=0, grado_id=0, materia="Matemática", duracion=2),
+        Bloque(2, docente_id=1, grado_id=0, materia="Computación", duracion=3),
+        Bloque(3, docente_id=1, grado_id=0, materia="Computación", duracion=2),
+        
+        # Grado 3B
+        Bloque(4, docente_id=2, grado_id=1, materia="Comunicación", duracion=3),
+        Bloque(5, docente_id=2, grado_id=1, materia="Comunicación", duracion=2),
+        
+        # Grado 4A
+        Bloque(6, docente_id=0, grado_id=2, materia="Física", duracion=3),
+        Bloque(7, docente_id=2, grado_id=2, materia="Historia", duracion=2),
+    ]
+    
+    # Ejecutar
+    scheduler = GeneticSchedulerV2(
         docentes=docentes,
-        clases=clases,
-        grados_secciones=["3A", "3B", "4A"],
-        num_generaciones=150
+        grados=grados,
+        bloques=bloques,
+        num_generaciones=100
     )
     
     mejor_solucion, ga_instance = scheduler.ejecutar()
-    
-    # Mostrar resumen en consola
-    scheduler.imprimir_resumen(mejor_solucion)
-    
-    # Exportar a Excel
-   # scheduler.exportar_excel(mejor_solucion, "horarios_docentes_optimizados.xlsx")
-    
-    # Visualizar gráficamente
-    scheduler.visualizar_horarios(mejor_solucion, guardar=True)
+    scheduler.imprimir_horarios(mejor_solucion)
