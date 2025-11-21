@@ -1,0 +1,976 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Prueba de Escritorio - Algoritmo Genético para Horarios</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        line-height: 1.6;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 20px;
+      }
+
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        overflow: hidden;
+      }
+
+      header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 40px;
+        text-align: center;
+      }
+
+      header h1 {
+        font-size: 2.5em;
+        margin-bottom: 10px;
+      }
+
+      header p {
+        font-size: 1.2em;
+        opacity: 0.9;
+      }
+
+      .content {
+        padding: 40px;
+      }
+
+      .step {
+        margin-bottom: 50px;
+        border-left: 4px solid #667eea;
+        padding-left: 30px;
+      }
+
+      .step h2 {
+        color: #333;
+        margin-bottom: 20px;
+        font-size: 1.8em;
+      }
+
+      .step-number {
+        display: inline-block;
+        background: #667eea;
+        color: white;
+        width: 40px;
+        height: 40px;
+        line-height: 40px;
+        text-align: center;
+        border-radius: 50%;
+        margin-right: 15px;
+        font-weight: bold;
+      }
+
+      .code-block {
+        background: #f7f7f7;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 20px;
+        margin: 20px 0;
+        font-family: "Courier New", monospace;
+        overflow-x: auto;
+      }
+
+      .matrix {
+        display: inline-block;
+        border: 2px solid #667eea;
+        border-radius: 8px;
+        margin: 20px 0;
+        overflow: hidden;
+      }
+
+      .matrix table {
+        border-collapse: collapse;
+      }
+
+      .matrix th,
+      .matrix td {
+        padding: 10px 15px;
+        text-align: center;
+        border: 1px solid #ddd;
+      }
+
+      .matrix th {
+        background: #667eea;
+        color: white;
+        font-weight: bold;
+      }
+
+      .matrix td {
+        background: white;
+      }
+
+      .matrix td.available {
+        background: #4caf50;
+        color: white;
+      }
+
+      .matrix td.unavailable {
+        background: #f44336;
+        color: white;
+      }
+
+      .chromosome {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px;
+        margin: 20px 0;
+      }
+
+      .gene {
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 2px solid #667eea;
+        border-radius: 5px;
+        font-weight: bold;
+        position: relative;
+      }
+
+      .gene.empty {
+        background: #f5f5f5;
+        color: #999;
+      }
+
+      .gene.assigned {
+        background: #4caf50;
+        color: white;
+      }
+
+      .gene-index {
+        position: absolute;
+        top: -18px;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 10px;
+        color: #666;
+      }
+
+      .schedule-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 20px 0;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      }
+
+      .schedule-table th {
+        background: #667eea;
+        color: white;
+        padding: 12px;
+        text-align: left;
+      }
+
+      .schedule-table td {
+        padding: 12px;
+        border: 1px solid #ddd;
+      }
+
+      .schedule-table tr:nth-child(even) {
+        background: #f9f9f9;
+      }
+
+      .fitness-calc {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        color: white;
+        padding: 25px;
+        border-radius: 10px;
+        margin: 20px 0;
+      }
+
+      .fitness-calc h3 {
+        margin-bottom: 15px;
+      }
+
+      .penalty-item {
+        display: flex;
+        justify-content: space-between;
+        margin: 10px 0;
+        padding: 10px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 5px;
+      }
+
+      .total-fitness {
+        font-size: 1.5em;
+        text-align: center;
+        margin-top: 20px;
+        padding: 15px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 8px;
+      }
+
+      .diagram {
+        text-align: center;
+        margin: 30px 0;
+      }
+
+      .arrow {
+        font-size: 2em;
+        color: #667eea;
+        margin: 20px 0;
+      }
+
+      .highlight {
+        background: yellow;
+        padding: 2px 6px;
+        border-radius: 3px;
+      }
+
+      .warning {
+        background: #ff9800;
+        color: white;
+        padding: 10px;
+        border-radius: 5px;
+        margin: 10px 0;
+      }
+
+      .success {
+        background: #4caf50;
+        color: white;
+        padding: 10px;
+        border-radius: 5px;
+        margin: 10px 0;
+      }
+
+      .error {
+        background: #f44336;
+        color: white;
+        padding: 10px;
+        border-radius: 5px;
+        margin: 10px 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>🧬 Prueba de Escritorio</h1>
+        <p>Algoritmo Genético para Optimización de Horarios Escolares</p>
+      </header>
+
+      <div class="content">
+        <!-- PASO 1: Configuración Inicial -->
+        <div class="step">
+          <h2><span class="step-number">1</span>Configuración Inicial</h2>
+
+          <p>
+            Establecemos un escenario simplificado para facilitar el seguimiento
+            del algoritmo:
+          </p>
+
+          <div class="code-block">
+            <strong>Parámetros del Sistema:</strong><br />
+            • Número de Aulas: 2 (3A, 3B)<br />
+            • Días de la semana: 3 (Lunes, Martes, Miércoles)<br />
+            • Horas por día: 4 (H1, H2, H3, H4)<br />
+            • Longitud del cromosoma: 24 genes (2 aulas × 3 días × 4 horas)
+          </div>
+
+          <div class="diagram">
+            <p><strong>Estructura del Problema:</strong></p>
+            <div
+              style="
+                display: flex;
+                justify-content: center;
+                gap: 30px;
+                margin-top: 20px;
+              "
+            >
+              <div style="text-align: center">
+                <div
+                  style="
+                    background: #667eea;
+                    color: white;
+                    padding: 20px;
+                    border-radius: 10px;
+                  "
+                >
+                  <strong>2 Aulas</strong><br />
+                  3A, 3B
+                </div>
+              </div>
+              <div style="text-align: center">×</div>
+              <div style="text-align: center">
+                <div
+                  style="
+                    background: #764ba2;
+                    color: white;
+                    padding: 20px;
+                    border-radius: 10px;
+                  "
+                >
+                  <strong>3 Días</strong><br />
+                  Lun, Mar, Mie
+                </div>
+              </div>
+              <div style="text-align: center">×</div>
+              <div style="text-align: center">
+                <div
+                  style="
+                    background: #f093fb;
+                    color: white;
+                    padding: 20px;
+                    border-radius: 10px;
+                  "
+                >
+                  <strong>4 Horas</strong><br />
+                  H1, H2, H3, H4
+                </div>
+              </div>
+              <div style="text-align: center">=</div>
+              <div style="text-align: center">
+                <div
+                  style="
+                    background: #4caf50;
+                    color: white;
+                    padding: 20px;
+                    border-radius: 10px;
+                  "
+                >
+                  <strong>24 Posiciones</strong><br />
+                  (Genes)
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- PASO 2: Creación de Profesores -->
+        <div class="step">
+          <h2><span class="step-number">2</span>Creación de Profesores</h2>
+
+          <p>Definimos 2 profesores con sus restricciones de disponibilidad:</p>
+
+          <h3>Profesor 1: Edwin</h3>
+          <ul>
+            <li>Horas semanales requeridas: <strong>6 horas</strong></li>
+            <li>
+              Disponibilidad: <span class="success">Todas las horas</span>
+            </li>
+          </ul>
+
+          <div class="matrix">
+            <table>
+              <thead>
+                <tr>
+                  <th>Edwin</th>
+                  <th>H1</th>
+                  <th>H2</th>
+                  <th>H3</th>
+                  <th>H4</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>Lunes</strong></td>
+                  <td class="available">✓</td>
+                  <td class="available">✓</td>
+                  <td class="available">✓</td>
+                  <td class="available">✓</td>
+                </tr>
+                <tr>
+                  <td><strong>Martes</strong></td>
+                  <td class="available">✓</td>
+                  <td class="available">✓</td>
+                  <td class="available">✓</td>
+                  <td class="available">✓</td>
+                </tr>
+                <tr>
+                  <td><strong>Miércoles</strong></td>
+                  <td class="available">✓</td>
+                  <td class="available">✓</td>
+                  <td class="available">✓</td>
+                  <td class="available">✓</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>Profesor 2: Carlos</h3>
+          <ul>
+            <li>Horas semanales requeridas: <strong>4 horas</strong></li>
+            <li>
+              Disponibilidad:
+              <span class="warning">Restricción en Lunes tarde</span>
+            </li>
+          </ul>
+
+          <div class="matrix">
+            <table>
+              <thead>
+                <tr>
+                  <th>Carlos</th>
+                  <th>H1</th>
+                  <th>H2</th>
+                  <th>H3</th>
+                  <th>H4</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>Lunes</strong></td>
+                  <td class="available">✓</td>
+                  <td class="available">✓</td>
+                  <td class="unavailable">✗</td>
+                  <td class="unavailable">✗</td>
+                </tr>
+                <tr>
+                  <td><strong>Martes</strong></td>
+                  <td class="available">✓</td>
+                  <td class="available">✓</td>
+                  <td class="available">✓</td>
+                  <td class="available">✓</td>
+                </tr>
+                <tr>
+                  <td><strong>Miércoles</strong></td>
+                  <td class="available">✓</td>
+                  <td class="available">✓</td>
+                  <td class="available">✓</td>
+                  <td class="available">✓</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- PASO 3: Creación de Cursos -->
+        <div class="step">
+          <h2>
+            <span class="step-number">3</span>Creación de Cursos y Bloques
+          </h2>
+
+          <p>Definimos los cursos y los convertimos en bloques de enseñanza:</p>
+
+          <table class="schedule-table">
+            <thead>
+              <tr>
+                <th>Curso</th>
+                <th>Profesor</th>
+                <th>Horas/Semana</th>
+                <th>Bloques Generados</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Matemáticas</td>
+                <td>Edwin</td>
+                <td>4</td>
+                <td>Bloque 0 (2h) + Bloque 1 (2h)</td>
+              </tr>
+              <tr>
+                <td>Computación</td>
+                <td>Edwin</td>
+                <td>2</td>
+                <td>Bloque 2 (2h)</td>
+              </tr>
+              <tr>
+                <td>Física</td>
+                <td>Carlos</td>
+                <td>4</td>
+                <td>Bloque 3 (2h) + Bloque 4 (2h)</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="success">
+            ✅ Total de bloques generados: <strong>5 bloques</strong>
+          </div>
+        </div>
+
+        <!-- PASO 4: Estructura del Cromosoma -->
+        <div class="step">
+          <h2><span class="step-number">4</span>Estructura del Cromosoma</h2>
+
+          <p>
+            El cromosoma es un array de 24 posiciones donde cada gen representa
+            una posición (aula, día, hora):
+          </p>
+
+          <h3>Mapeo de Índices:</h3>
+          <div class="code-block">
+            <strong>Fórmula de conversión:</strong><br />
+            índice_global = aula × 12 + día × 4 + hora<br /><br />
+
+            <strong>Ejemplos:</strong><br />
+            • Índice 0 → Aula 3A, Lunes, H1<br />
+            • Índice 1 → Aula 3A, Lunes, H2<br />
+            • Índice 12 → Aula 3B, Lunes, H1<br />
+            • Índice 13 → Aula 3B, Lunes, H2
+          </div>
+
+          <h3>Cromosoma de Ejemplo:</h3>
+          <div class="chromosome">
+            <div class="gene assigned">
+              <span class="gene-index">0</span>
+              0
+            </div>
+            <div class="gene assigned">
+              <span class="gene-index">1</span>
+              0
+            </div>
+            <div class="gene empty">
+              <span class="gene-index">2</span>
+              -1
+            </div>
+            <div class="gene empty">
+              <span class="gene-index">3</span>
+              -1
+            </div>
+            <div class="gene empty">
+              <span class="gene-index">4</span>
+              -1
+            </div>
+            <div class="gene empty">
+              <span class="gene-index">5</span>
+              -1
+            </div>
+            <div class="gene assigned">
+              <span class="gene-index">6</span>
+              3
+            </div>
+            <div class="gene assigned">
+              <span class="gene-index">7</span>
+              3
+            </div>
+            <div class="gene empty">
+              <span class="gene-index">8</span>
+              -1
+            </div>
+            <div class="gene empty">
+              <span class="gene-index">9</span>
+              -1
+            </div>
+            <div class="gene empty">
+              <span class="gene-index">10</span>
+              -1
+            </div>
+            <div class="gene empty">
+              <span class="gene-index">11</span>
+              -1
+            </div>
+            <div class="gene assigned">
+              <span class="gene-index">12</span>
+              2
+            </div>
+            <div class="gene assigned">
+              <span class="gene-index">13</span>
+              2
+            </div>
+            <div class="gene empty">
+              <span class="gene-index">14</span>
+              -1
+            </div>
+            <div class="gene empty">
+              <span class="gene-index">15</span>
+              -1
+            </div>
+            <div class="gene empty">
+              <span class="gene-index">16</span>
+              -1
+            </div>
+            <div class="gene empty">
+              <span class="gene-index">17</span>
+              -1
+            </div>
+            <div class="gene empty">
+              <span class="gene-index">18</span>
+              -1
+            </div>
+            <div class="gene empty">
+              <span class="gene-index">19</span>
+              -1
+            </div>
+            <div class="gene empty">
+              <span class="gene-index">20</span>
+              -1
+            </div>
+            <div class="gene empty">
+              <span class="gene-index">21</span>
+              -1
+            </div>
+            <div class="gene empty">
+              <span class="gene-index">22</span>
+              -1
+            </div>
+            <div class="gene empty">
+              <span class="gene-index">23</span>
+              -1
+            </div>
+          </div>
+
+          <p>
+            <strong>Leyenda:</strong> Verde = Bloque asignado | Gris = Posición
+            vacía (-1)
+          </p>
+        </div>
+
+        <!-- PASO 5: Horario Decodificado -->
+        <div class="step">
+          <h2><span class="step-number">5</span>Horario Decodificado</h2>
+
+          <p>El cromosoma anterior se decodifica en los siguientes horarios:</p>
+
+          <h3>Aula 3A:</h3>
+          <table class="schedule-table">
+            <thead>
+              <tr>
+                <th>Día</th>
+                <th>H1</th>
+                <th>H2</th>
+                <th>H3</th>
+                <th>H4</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Lunes</strong></td>
+                <td style="background: #4caf50; color: white">MAT (Edwin)</td>
+                <td style="background: #4caf50; color: white">MAT (Edwin)</td>
+                <td>---</td>
+                <td>---</td>
+              </tr>
+              <tr>
+                <td><strong>Martes</strong></td>
+                <td>---</td>
+                <td>---</td>
+                <td style="background: #ff9800; color: white">FIS (Carlos)</td>
+                <td style="background: #ff9800; color: white">FIS (Carlos)</td>
+              </tr>
+              <tr>
+                <td><strong>Miércoles</strong></td>
+                <td>---</td>
+                <td>---</td>
+                <td>---</td>
+                <td>---</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <h3>Aula 3B:</h3>
+          <table class="schedule-table">
+            <thead>
+              <tr>
+                <th>Día</th>
+                <th>H1</th>
+                <th>H2</th>
+                <th>H3</th>
+                <th>H4</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Lunes</strong></td>
+                <td style="background: #2196f3; color: white">COM (Edwin)</td>
+                <td style="background: #2196f3; color: white">COM (Edwin)</td>
+                <td>---</td>
+                <td>---</td>
+              </tr>
+              <tr>
+                <td><strong>Martes</strong></td>
+                <td>---</td>
+                <td>---</td>
+                <td>---</td>
+                <td>---</td>
+              </tr>
+              <tr>
+                <td><strong>Miércoles</strong></td>
+                <td>---</td>
+                <td>---</td>
+                <td>---</td>
+                <td>---</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="error">
+            ⚠️ <strong>Problema detectado:</strong> Edwin está asignado en dos
+            aulas al mismo tiempo (Lunes H1-H2)
+          </div>
+        </div>
+
+        <!-- PASO 6: Cálculo de Fitness -->
+        <div class="step">
+          <h2><span class="step-number">6</span>Cálculo de Fitness</h2>
+
+          <p>Evaluamos la calidad del horario usando la función de fitness:</p>
+
+          <div class="fitness-calc">
+            <h3>Función de Fitness = 10000 - Σ(Penalizaciones)</h3>
+
+            <div class="penalty-item">
+              <span><strong>1. Cruces de profesores:</strong></span>
+              <span>2 cruces × 100 = 200 puntos</span>
+            </div>
+
+            <div class="penalty-item">
+              <span><strong>2. Violación de disponibilidad:</strong></span>
+              <span>0 violaciones × 50 = 0 puntos</span>
+            </div>
+
+            <div class="penalty-item">
+              <span><strong>3. Horas vacías entre clases:</strong></span>
+              <span>0 horas × 30 = 0 puntos</span>
+            </div>
+
+            <div class="penalty-item">
+              <span><strong>4. Diferencia horas semanales:</strong></span>
+              <span>4 horas × 80 = 320 puntos</span>
+            </div>
+
+            <div class="total-fitness">
+              <strong>FITNESS TOTAL = 10000 - 520 = 9480</strong>
+            </div>
+          </div>
+
+          <p><strong>Detalle de penalizaciones:</strong></p>
+          <ul>
+            <li>
+              Edwin tiene cruces en Lunes H1 y H2 (está en 3A y 3B
+              simultáneamente)
+            </li>
+            <li>Edwin: 6 horas requeridas, 4 asignadas (faltan 2)</li>
+            <li>Carlos: 4 horas requeridas, 2 asignadas (faltan 2)</li>
+          </ul>
+        </div>
+
+        <!-- PASO 7: Operadores Genéticos -->
+        <div class="step">
+          <h2><span class="step-number">7</span>Operadores Genéticos</h2>
+
+          <h3>1. Selección por Torneo</h3>
+          <p>
+            Se seleccionan los individuos con mejor fitness para ser padres.
+          </p>
+
+          <h3>2. Cruce de Dos Puntos</h3>
+          <div class="diagram">
+            <p><strong>Padres:</strong></p>
+            <div style="display: flex; justify-content: center; gap: 20px">
+              <div>
+                <p>Padre 1:</p>
+                <div class="chromosome" style="justify-content: center">
+                  <div class="gene assigned">0</div>
+                  <div class="gene assigned">0</div>
+                  <div class="gene empty">-1</div>
+                  <div class="gene empty">-1</div>
+                  <div style="background: yellow; padding: 5px">
+                    <div class="gene empty">-1</div>
+                    <div class="gene empty">-1</div>
+                    <div class="gene assigned">3</div>
+                    <div class="gene assigned">3</div>
+                  </div>
+                  <div class="gene empty">-1</div>
+                  <div class="gene empty">-1</div>
+                </div>
+              </div>
+              <div>
+                <p>Padre 2:</p>
+                <div class="chromosome" style="justify-content: center">
+                  <div class="gene empty">-1</div>
+                  <div class="gene empty">-1</div>
+                  <div class="gene assigned">1</div>
+                  <div class="gene assigned">1</div>
+                  <div style="background: yellow; padding: 5px">
+                    <div class="gene empty">-1</div>
+                    <div class="gene empty">-1</div>
+                    <div class="gene empty">-1</div>
+                    <div class="gene empty">-1</div>
+                  </div>
+                  <div class="gene assigned">4</div>
+                  <div class="gene assigned">4</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="arrow">⬇</div>
+
+            <p><strong>Hijos (después del cruce):</strong></p>
+            <div style="display: flex; justify-content: center; gap: 20px">
+              <div>
+                <p>Hijo 1:</p>
+                <div class="chromosome" style="justify-content: center">
+                  <div class="gene assigned">0</div>
+                  <div class="gene assigned">0</div>
+                  <div class="gene empty">-1</div>
+                  <div class="gene empty">-1</div>
+                  <div style="background: lightgreen; padding: 5px">
+                    <div class="gene empty">-1</div>
+                    <div class="gene empty">-1</div>
+                    <div class="gene empty">-1</div>
+                    <div class="gene empty">-1</div>
+                  </div>
+                  <div class="gene empty">-1</div>
+                  <div class="gene empty">-1</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <h3>3. Mutación</h3>
+          <p>Con probabilidad 0.1, cada gen puede cambiar aleatoriamente:</p>
+          <div class="code-block">
+            Mutación en posición 6: 3 → 2<br />
+            Mutación en posición 9: -1 → 0
+          </div>
+        </div>
+
+        <!-- PASO 8: Ciclo Evolutivo -->
+        <div class="step">
+          <h2><span class="step-number">8</span>Ciclo Evolutivo</h2>
+
+          <div class="diagram">
+            <div style="text-align: center">
+              <div
+                style="
+                  display: inline-block;
+                  background: #f5f5f5;
+                  padding: 30px;
+                  border-radius: 15px;
+                "
+              >
+                <h3>Proceso Iterativo del AG</h3>
+
+                <div style="margin: 20px 0">
+                  <div
+                    style="
+                      background: #667eea;
+                      color: white;
+                      padding: 15px;
+                      border-radius: 8px;
+                      margin: 10px;
+                    "
+                  >
+                    1. Población Inicial (100 individuos)
+                  </div>
+                  <div class="arrow">⬇</div>
+                  <div
+                    style="
+                      background: #764ba2;
+                      color: white;
+                      padding: 15px;
+                      border-radius: 8px;
+                      margin: 10px;
+                    "
+                  >
+                    2. Evaluación (Fitness)
+                  </div>
+                  <div class="arrow">⬇</div>
+                  <div
+                    style="
+                      background: #f093fb;
+                      color: white;
+                      padding: 15px;
+                      border-radius: 8px;
+                      margin: 10px;
+                    "
+                  >
+                    3. Selección de Padres
+                  </div>
+                  <div class="arrow">⬇</div>
+                  <div
+                    style="
+                      background: #f5576c;
+                      color: white;
+                      padding: 15px;
+                      border-radius: 8px;
+                      margin: 10px;
+                    "
+                  >
+                    4. Cruce y Mutación
+                  </div>
+                  <div class="arrow">⬇</div>
+                  <div
+                    style="
+                      background: #4caf50;
+                      color: white;
+                      padding: 15px;
+                      border-radius: 8px;
+                      margin: 10px;
+                    "
+                  >
+                    5. Nueva Generación
+                  </div>
+                  <div class="arrow">↻</div>
+                  <p><strong>Repetir 500 generaciones</strong></p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Resumen Final -->
+        <div class="step">
+          <h2><span class="step-number">✓</span>Resumen y Conclusiones</h2>
+
+          <div class="success">
+            <h3>✅ Ventajas del Algoritmo Genético:</h3>
+            <ul>
+              <li>Encuentra soluciones buenas en problemas complejos</li>
+              <li>Maneja múltiples restricciones simultáneamente</li>
+              <li>Se adapta a cambios en los requerimientos</li>
+              <li>Explora el espacio de soluciones eficientemente</li>
+            </ul>
+          </div>
+
+          <div class="warning">
+            <h3>⚠️ Consideraciones:</h3>
+            <ul>
+              <li>No garantiza la solución óptima global</li>
+              <li>
+                Requiere ajuste de parámetros (población, generaciones, pesos)
+              </li>
+              <li>El tiempo de ejecución aumenta con el tamaño del problema</li>
+            </ul>
+          </div>
+
+          <h3>Parámetros Clave del Algoritmo:</h3>
+          <table class="schedule-table">
+            <thead>
+              <tr>
+                <th>Parámetro</th>
+                <th>Valor</th>
+                <th>Descripción</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Tamaño de Población</td>
+                <td>100</td>
+                <td>Número de soluciones candidatas</td>
+              </tr>
+              <tr>
+                <td>Generaciones</td>
+                <td>500</td>
+                <td>Iteraciones del algoritmo</td>
+              </tr>
+              <tr>
+                <td>Tasa de Mutación</td>
+                <td>0.1</td>
+                <td>Probabilidad de cambio aleatorio</td>
+              </tr>
+              <tr>
+                <td>Tasa de Cruce</td>
+                <td>0.8</td>
+                <td>Probabilidad de intercambio genético</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
