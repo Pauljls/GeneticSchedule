@@ -230,7 +230,8 @@ class SistemaHorarios:
         cromosoma = solution.astype(np.int32)
         penalizacion_total = 0
         
-        # 1. Penalización por cruces de profesores (mismo profesor, misma hora, diferente aula)
+        # 1. Penalización por cruces de profesores (mismo profesor, misma hora,
+        #  diferente aula)
         for dia in range(NUM_DIAS):
             for hora in range(HORAS_POR_DIA):
                 profesores_hora = {}
@@ -568,13 +569,13 @@ def crear_datos_ejemplo():
     # Crear cursos
     cursos_data = [
         {"id": 1, "nombre": "Matemáticas", "codigo": "MAT101", "profesor_id": 1, "horas": 8},
-        {"id": 2, "nombre": "Computación", "codigo": "COMP101", "profesor_id": 1, "horas": 6},
+        {"id": 2, "nombre": "Computación", "codigo": "COMP101", "profesor_id": 1, "horas": 8},
         {"id": 3, "nombre": "Física", "codigo": "FIS101", "profesor_id": 2, "horas": 8},
         {"id": 4, "nombre": "Química", "codigo": "QUI101", "profesor_id": 2, "horas": 6},
-        {"id": 5, "nombre": "Historia", "codigo": "HIS101", "profesor_id": 3, "horas": 6},
-        {"id": 6, "nombre": "Geografía", "codigo": "GEO101", "profesor_id": 3, "horas": 4},
+        {"id": 5, "nombre": "Historia", "codigo": "HIS101", "profesor_id": 3, "horas": 10},
+        {"id": 6, "nombre": "Geografía", "codigo": "GEO101", "profesor_id": 3, "horas": 5},
         {"id": 7, "nombre": "Inglés", "codigo": "ING101", "profesor_id": 4, "horas": 6},
-        {"id": 8, "nombre": "Literatura", "codigo": "LIT101", "profesor_id": 4, "horas": 4},
+        {"id": 8, "nombre": "Literatura", "codigo": "LIT101", "profesor_id": 4, "horas": 6},
         {"id": 9, "nombre": "Arte", "codigo": "ART101", "profesor_id": 1, "horas": 4},
         {"id": 10, "nombre": "Educación Física", "codigo": "EF101", "profesor_id": 2, "horas": 4},
     ]
