@@ -280,8 +280,8 @@ class SistemaHorarios:
                         diferencia = horas_profesor[i + 1] - horas_profesor[i] - 1
                         horas_vacias += diferencia
                     
-                    penalizacion_total += horas_vacias * PESO_HORAS_VACIAS
-        
+                    penalizacion_total += horas_vacias * PESO_HORAS_VACIAS 
+                        
         # 4. Penalización por no cumplir con las horas semanales
         horas_asignadas = {prof_id: 0 for prof_id in self.profesores.keys()}
         
@@ -632,6 +632,27 @@ def main():
     print("HORARIO INDIVIDUAL - Profesor: Edwin")
     print("=" * 60)
     horario_edwin = sistema.horario_profesor(mejor_solucion, 1)
+    print(horario_edwin.to_string())
+
+    # Mostrar horario de un profesor específico
+    print("\n" + "=" * 60)
+    print("HORARIO INDIVIDUAL - Profesor: Carlos")
+    print("=" * 60)
+    horario_edwin = sistema.horario_profesor(mejor_solucion, 2)
+    print(horario_edwin.to_string())
+
+    # Mostrar horario de un profesor específico
+    print("\n" + "=" * 60)
+    print("HORARIO INDIVIDUAL - Profesor: Maria")
+    print("=" * 60)
+    horario_edwin = sistema.horario_profesor(mejor_solucion, 3)
+    print(horario_edwin.to_string())
+
+    # Mostrar horario de un profesor específico
+    print("\n" + "=" * 60)
+    print("HORARIO INDIVIDUAL - Profesor: Juan")
+    print("=" * 60)
+    horario_edwin = sistema.horario_profesor(mejor_solucion, 4)
     print(horario_edwin.to_string())
     
     return sistema, mejor_solucion
