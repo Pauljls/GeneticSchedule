@@ -599,13 +599,13 @@ def crear_datos_ejemplo():
     # Crear cursos
     cursos_data = [
         {"id": 1, "nombre": "Matemáticas", "codigo": "MAT101", "profesor_id": 1, "horas": 8},
-        {"id": 2, "nombre": "Computación", "codigo": "COMP101", "profesor_id": 1, "horas": 6},
+        {"id": 2, "nombre": "Computación", "codigo": "COMP101", "profesor_id": 1, "horas": 8},
         {"id": 3, "nombre": "Física", "codigo": "FIS101", "profesor_id": 2, "horas": 8},
         {"id": 4, "nombre": "Química", "codigo": "QUI101", "profesor_id": 2, "horas": 6},
-        {"id": 5, "nombre": "Historia", "codigo": "HIS101", "profesor_id": 3, "horas": 6},
-        {"id": 6, "nombre": "Geografía", "codigo": "GEO101", "profesor_id": 3, "horas": 4},
+        {"id": 5, "nombre": "Historia", "codigo": "HIS101", "profesor_id": 3, "horas": 10},
+        {"id": 6, "nombre": "Geografía", "codigo": "GEO101", "profesor_id": 3, "horas": 5},
         {"id": 7, "nombre": "Inglés", "codigo": "ING101", "profesor_id": 4, "horas": 6},
-        {"id": 8, "nombre": "Literatura", "codigo": "LIT101", "profesor_id": 4, "horas": 4},
+        {"id": 8, "nombre": "Literatura", "codigo": "LIT101", "profesor_id": 4, "horas": 6},
         {"id": 9, "nombre": "Arte", "codigo": "ART101", "profesor_id": 1, "horas": 4},
         {"id": 10, "nombre": "Educación Física", "codigo": "EF101", "profesor_id": 2, "horas": 4},
     ]
@@ -663,6 +663,27 @@ def main():
     print("HORARIO INDIVIDUAL - Profesor: Edwin")
     print("=" * 60)
     horario_edwin = sistema.horario_profesor(mejor_solucion, 1)
+    print(horario_edwin.to_string())
+
+    # Mostrar horario de un profesor específico
+    print("\n" + "=" * 60)
+    print("HORARIO INDIVIDUAL - Profesor: Carlos")
+    print("=" * 60)
+    horario_edwin = sistema.horario_profesor(mejor_solucion, 2)
+    print(horario_edwin.to_string())
+
+    # Mostrar horario de un profesor específico
+    print("\n" + "=" * 60)
+    print("HORARIO INDIVIDUAL - Profesor: Maria")
+    print("=" * 60)
+    horario_edwin = sistema.horario_profesor(mejor_solucion, 3)
+    print(horario_edwin.to_string())
+
+    # Mostrar horario de un profesor específico
+    print("\n" + "=" * 60)
+    print("HORARIO INDIVIDUAL - Profesor: Juan")
+    print("=" * 60)
+    horario_edwin = sistema.horario_profesor(mejor_solucion, 4)
     print(horario_edwin.to_string())
     
     return sistema, mejor_solucion
