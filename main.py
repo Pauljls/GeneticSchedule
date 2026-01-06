@@ -37,12 +37,12 @@ DIAS = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes"]
 NUM_DIAS = 5
 HORAS_POR_DIA = 9
 
-# Parámetros del algoritmo genético
-POBLACION_INICIAL = 100
-NUM_GENERACIONES = 500
-NUM_PADRES = 20
-TASA_MUTACION = 0.1
-TASA_CRUCE = 0.8
+# Parámetros del algoritmo genético (optimizados para minimizar horas vacías)
+POBLACION_INICIAL = 150  # Aumentado para mayor diversidad
+NUM_GENERACIONES = 800   # Más generaciones para mejor convergencia
+NUM_PADRES = 30          # Más padres para mayor exploración
+TASA_MUTACION = 0.15     # Mayor mutación para escapar de óptimos locales
+TASA_CRUCE = 0.85        # Mayor cruce para combinar buenas soluciones
 
 # Pesos para la función de fitness
 PESO_CRUCES = 100      # Penalización por cruce de profesores
@@ -224,43 +224,52 @@ class SistemaHorarios:
     
     def calcular_fitness(self, ga_instance, solution, solution_idx) -> float:
         """
-        Función de fitness para el algoritmo genético
-        Maximiza la calidad del horario minimizando penalizaciones
+        Función de fitness MEJORADA con enfoque híbrido:
+        - Restricciones DURAS (cruces y disponibilidad): deben cumplirse obligatoriamente
+        - Restricciones BLANDAS (horas vacías): penalización EXPONENCIAL para minimizarlas agresivamente
+
+        Esta función está optimizada específicamente para ELIMINAR BLOQUES VACÍOS
+        entre clases de un mismo profesor.
         """
         cromosoma = solution.astype(np.int32)
-        penalizacion_total = 0
-        
-        # 1. Penalización por cruces de profesores (mismo profesor, misma hora, diferente aula)
+
+        # === MÉTRICAS ===
+        num_cruces = 0
+        num_violaciones_disponibilidad = 0
+        total_horas_vacias = 0
+        diferencia_horas_semanales = 0
+
+        # 1. Contar cruces de profesores (RESTRICCIÓN DURA)
         for dia in range(NUM_DIAS):
             for hora in range(HORAS_POR_DIA):
                 profesores_hora = {}
-                
+
                 for aula in range(NUM_AULAS):
                     idx = self.indices_locales_a_global(aula, dia, hora)
                     if cromosoma[idx] >= 0 and cromosoma[idx] < len(self.bloques):
                         bloque = self.bloques[cromosoma[idx]]
                         prof_id = bloque.profesor_id
-                        
+
                         if prof_id in profesores_hora:
-                            penalizacion_total += PESO_CRUCES
+                            num_cruces += 1
                         else:
                             profesores_hora[prof_id] = aula
-        
-        # 2. Penalización por violar disponibilidad del profesor
+
+        # 2. Contar violaciones de disponibilidad (RESTRICCIÓN DURA)
         for idx in range(LONGITUD_CROMOSOMA):
             if cromosoma[idx] >= 0 and cromosoma[idx] < len(self.bloques):
                 aula, dia, hora = self.indices_globales_a_locales(idx)
                 bloque = self.bloques[cromosoma[idx]]
                 profesor = self.profesores[bloque.profesor_id]
-                
+
                 if profesor.disponibilidad[dia, hora] == 0:
-                    penalizacion_total += PESO_DISPONIBILIDAD
-        
-        # 3. Penalización por horas vacías entre clases del mismo profesor
+                    num_violaciones_disponibilidad += 1
+
+        # 3. Contar horas vacías entre clases (OBJETIVO PRINCIPAL)
         for profesor_id, profesor in self.profesores.items():
             for dia in range(NUM_DIAS):
                 horas_profesor = []
-                
+
                 # Recopilar todas las horas donde enseña el profesor
                 for hora in range(HORAS_POR_DIA):
                     for aula in range(NUM_AULAS):
@@ -270,41 +279,63 @@ class SistemaHorarios:
                             if bloque.profesor_id == profesor_id:
                                 horas_profesor.append(hora)
                                 break
-                
+
                 # Calcular horas vacías entre la primera y última clase
                 if len(horas_profesor) > 1:
                     horas_profesor.sort()
-                    horas_vacias = 0
                     for i in range(len(horas_profesor) - 1):
-                        # Si hay más de una hora de diferencia, hay horas vacías
                         diferencia = horas_profesor[i + 1] - horas_profesor[i] - 1
-                        horas_vacias += diferencia
-                    
-                    penalizacion_total += horas_vacias * PESO_HORAS_VACIAS
-        
-        # 4. Penalización por no cumplir con las horas semanales
+                        total_horas_vacias += diferencia
+
+        # 4. Calcular diferencia en horas semanales (RESTRICCIÓN BLANDA)
         horas_asignadas = {prof_id: 0 for prof_id in self.profesores.keys()}
-        
-        for idx in range(LONGITUD_CROMOSOMA):
-            if cromosoma[idx] >= 0 and cromosoma[idx] < len(self.bloques):
-                bloque = self.bloques[cromosoma[idx]]
-                # Contar solo una vez cada bloque (evitar contar duplicados)
-                
-        # Contar horas únicas por bloque
         bloques_contados = set()
+
         for idx in range(LONGITUD_CROMOSOMA):
             if cromosoma[idx] >= 0 and cromosoma[idx] < len(self.bloques):
                 if cromosoma[idx] not in bloques_contados:
                     bloques_contados.add(cromosoma[idx])
                     bloque = self.bloques[cromosoma[idx]]
                     horas_asignadas[bloque.profesor_id] += 1
-        
+
         for profesor_id, profesor in self.profesores.items():
-            diferencia = abs(profesor.horas_semanales - horas_asignadas[profesor_id])
-            penalizacion_total += diferencia * PESO_HORAS_SEMANALES
-        
-        # Convertir penalización a fitness (mayor es mejor)
-        fitness = 10000 - penalizacion_total
+            diferencia_horas_semanales += abs(profesor.horas_semanales - horas_asignadas[profesor_id])
+
+        # === CÁLCULO DE FITNESS ===
+
+        # FASE 1: Verificar restricciones DURAS
+        restricciones_duras = num_cruces + num_violaciones_disponibilidad
+
+        if restricciones_duras > 0:
+            # Si hay violaciones duras, penalizar pero permitir evolución
+            # Aún consideramos horas vacías para diferenciar soluciones con mismas violaciones duras
+            penalizacion_duras = restricciones_duras * 500
+            penalizacion_vacias_suave = total_horas_vacias * 10  # Penalización suave
+            penalizacion_horas_suave = diferencia_horas_semanales * 5
+
+            fitness = 10000 - penalizacion_duras - penalizacion_vacias_suave - penalizacion_horas_suave
+            return max(1, fitness)  # Mínimo 1 para evitar 0
+
+        # FASE 2: Sin violaciones duras, optimizar restricciones BLANDAS agresivamente
+        # Penalización EXPONENCIAL para horas vacías (objetivo principal: ELIMINARLAS)
+        if total_horas_vacias > 0:
+            # Usamos base 1.8 para ser muy agresivo contra horas vacías
+            penalizacion_vacias = PESO_HORAS_VACIAS * (1.8 ** total_horas_vacias - 1)
+        else:
+            penalizacion_vacias = 0  # ¡Perfecto! Sin horas vacías
+
+        # Penalización CUADRÁTICA para horas semanales (menos crítica)
+        if diferencia_horas_semanales > 0:
+            penalizacion_horas = PESO_HORAS_SEMANALES * (diferencia_horas_semanales ** 1.5)
+        else:
+            penalizacion_horas = 0
+
+        # Calcular fitness final
+        penalizacion_total = penalizacion_vacias + penalizacion_horas
+
+        # Normalizar para evitar valores negativos extremos
+        fitness = 10000 / (1 + penalizacion_total / 1000)
+
         return max(0, fitness)
     
     def cromosoma_a_horario(self, cromosoma: np.ndarray) -> Dict[str, pd.DataFrame]:
@@ -468,8 +499,8 @@ class SistemaHorarios:
         for prof_id, profesor in self.profesores.items():
             asignadas = horas_asignadas[prof_id]
             requeridas = profesor.horas_semanales
-            estado = "✓" if asignadas == requeridas else "✗"
-            print(f"{profesor.nombre}: {asignadas}/{requeridas} horas {estado}")
+            estado = "OK" if asignadas == requeridas else "X"
+            print(f"{profesor.nombre}: {asignadas}/{requeridas} horas [{estado}]")
         
         # Utilización de aulas
         print("\nUtilización de aulas:")
