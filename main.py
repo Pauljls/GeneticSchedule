@@ -783,33 +783,13 @@ def main():
         print(f"{'-' * 40}")
         print(df_horario.to_string())
     
-    # Mostrar horario de un profesor específico
-    print("\n" + "=" * 60)
-    print("HORARIO INDIVIDUAL - Profesor: Edwin")
-    print("=" * 60)
-    horario_edwin = sistema.horario_profesor(mejor_solucion, 1)
-    print(horario_edwin.to_string())
-
-    # Mostrar horario de un profesor específico
-    print("\n" + "=" * 60)
-    print("HORARIO INDIVIDUAL - Profesor: Carlos")
-    print("=" * 60)
-    horario_edwin = sistema.horario_profesor(mejor_solucion, 2)
-    print(horario_edwin.to_string())
-
-    # Mostrar horario de un profesor específico
-    print("\n" + "=" * 60)
-    print("HORARIO INDIVIDUAL - Profesor: Maria")
-    print("=" * 60)
-    horario_edwin = sistema.horario_profesor(mejor_solucion, 3)
-    print(horario_edwin.to_string())
-
-    # Mostrar horario de un profesor específico
-    print("\n" + "=" * 60)
-    print("HORARIO INDIVIDUAL - Profesor: Juan")
-    print("=" * 60)
-    horario_edwin = sistema.horario_profesor(mejor_solucion, 4)
-    print(horario_edwin.to_string())
+    # Mostrar horario individual de TODOS los profesores
+    for prof_id, profesor in sistema.profesores.items():
+        print("\n" + "=" * 60)
+        print(f"HORARIO INDIVIDUAL - Profesor: {profesor.nombre}")
+        print("=" * 60)
+        horario_prof = sistema.horario_profesor(mejor_solucion, prof_id)
+        print(horario_prof.to_string())
     
     return sistema, mejor_solucion
 
