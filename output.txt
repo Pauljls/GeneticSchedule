@@ -11,25 +11,25 @@ Bloques generados: 33
 Iniciando algoritmo genético...
 Población: 150, Generaciones: 800
 --------------------------------------------------
-Generación 50: Fitness = 8800.00
-Generación 100: Fitness = 8800.00
-Generación 150: Fitness = 8800.00
-Generación 200: Fitness = 8800.00
-Generación 250: Fitness = 8800.00
-Generación 300: Fitness = 8800.00
-Generación 350: Fitness = 8800.00
-Generación 400: Fitness = 8800.00
-Generación 450: Fitness = 8800.00
-Generación 500: Fitness = 8800.00
-Generación 550: Fitness = 8800.00
-Generación 600: Fitness = 8800.00
-Generación 650: Fitness = 8800.00
-Generación 700: Fitness = 8800.00
-Generación 750: Fitness = 8800.00
-Generación 800: Fitness = 8800.00
+Generación 50: Fitness = 7967.90
+Generación 100: Fitness = 7967.90
+Generación 150: Fitness = 7967.90
+Generación 200: Fitness = 7967.90
+Generación 250: Fitness = 7967.90
+Generación 300: Fitness = 7967.90
+Generación 350: Fitness = 7967.90
+Generación 400: Fitness = 7967.90
+Generación 450: Fitness = 7967.90
+Generación 500: Fitness = 7967.90
+Generación 550: Fitness = 7967.90
+Generación 600: Fitness = 8041.60
+Generación 650: Fitness = 8041.60
+Generación 700: Fitness = 8041.60
+Generación 750: Fitness = 8041.60
+Generación 800: Fitness = 8041.60
 --------------------------------------------------
 Algoritmo finalizado!
-Mejor fitness: 8800.00
+Mejor fitness: 8041.60
 
 ============================================================
 ESTADÍSTICAS DEL HORARIO GENERADO
@@ -37,23 +37,23 @@ ESTADÍSTICAS DEL HORARIO GENERADO
 
 Horas semanales por profesor:
 ----------------------------------------
-Edwin: 20/20 horas [OK]
+Edwin: 18/20 horas [X]
 Carlos: 18/18 horas [OK]
 María: 15/15 horas [OK]
 Juan: 12/12 horas [OK]
 
 Utilización de aulas:
 ----------------------------------------
-3A: 24/45 horas (53.3%)
-3B: 21/45 horas (46.7%)
-4: 20/45 horas (44.4%)
+3A: 26/45 horas (57.8%)
+3B: 19/45 horas (42.2%)
+4: 25/45 horas (55.6%)
 
 Horas vacías entre clases por profesor:
 ----------------------------------------
-Edwin: 1 horas vacías
-Carlos: 2 horas vacías
+Edwin: 18 horas vacías
+Carlos: 10 horas vacías
 María: 0 horas vacías
-Juan: 1 horas vacías
+Juan: 12 horas vacías
 
 ============================================================
 HORARIOS POR AULA
@@ -62,97 +62,97 @@ HORARIOS POR AULA
 ----------------------------------------
 AULA: 3A
 ----------------------------------------
-                      Lunes                      Martes             Miércoles                Jueves               Viernes
-07:20-08:05             ---           Historia\n(María)                   ---    Literatura\n(Juan)        Inglés\n(Juan)
-08:05-08:50             ---           Historia\n(María)                   ---    Literatura\n(Juan)        Inglés\n(Juan)
-08:50-09:35  Inglés\n(Juan)  Educación Física\n(Carlos)  Matemáticas\n(Edwin)      Física\n(Carlos)      Física\n(Carlos)
-09:35-10:20  Inglés\n(Juan)  Educación Física\n(Carlos)  Matemáticas\n(Edwin)      Física\n(Carlos)      Física\n(Carlos)
-10:40-11:25             ---                         ---                   ---                   ---  Matemáticas\n(Edwin)
-11:25-12:10             ---                         ---                   ---         Arte\n(Edwin)  Matemáticas\n(Edwin)
-12:10-12:55             ---                         ---      Física\n(Carlos)         Arte\n(Edwin)                   ---
-13:25-14:10             ---                         ---      Física\n(Carlos)  Computación\n(Edwin)                   ---
-14:10-14:55             ---                         ---                   ---  Computación\n(Edwin)                   ---
+                            Lunes                Martes         Miércoles                Jueves               Viernes
+07:20-08:05                   ---  Matemáticas\n(Edwin)  Física\n(Carlos)  Matemáticas\n(Edwin)        Inglés\n(Juan)
+08:05-08:50                   ---    Geografía\n(María)  Física\n(Carlos)                   ---     Historia\n(María)
+08:50-09:35                   ---                   ---               ---                   ---    Geografía\n(María)
+09:35-10:20                   ---    Literatura\n(Juan)               ---      Física\n(Carlos)    Geografía\n(María)
+10:40-11:25                   ---  Computación\n(Edwin)               ---      Física\n(Carlos)                   ---
+11:25-12:10  Computación\n(Edwin)  Computación\n(Edwin)    Inglés\n(Juan)         Arte\n(Edwin)                   ---
+12:10-12:55  Computación\n(Edwin)                   ---    Inglés\n(Juan)         Arte\n(Edwin)     Química\n(Carlos)
+13:25-14:10                   ---                   ---               ---  Matemáticas\n(Edwin)  Matemáticas\n(Edwin)
+14:10-14:55        Inglés\n(Juan)                   ---               ---     Química\n(Carlos)  Matemáticas\n(Edwin)
 
 ----------------------------------------
 AULA: 3B
 ----------------------------------------
-                            Lunes                      Martes             Miércoles                Jueves             Viernes
-07:20-08:05  Computación\n(Edwin)                         ---  Computación\n(Edwin)                   ---                 ---
-08:05-08:50  Computación\n(Edwin)          Geografía\n(María)  Computación\n(Edwin)                   ---  Literatura\n(Juan)
-08:50-09:35                   ---          Geografía\n(María)    Geografía\n(María)                   ---  Literatura\n(Juan)
-09:35-10:20  Computación\n(Edwin)                         ---                   ---  Matemáticas\n(Edwin)                 ---
-10:40-11:25  Computación\n(Edwin)                         ---        Inglés\n(Juan)  Matemáticas\n(Edwin)   Química\n(Carlos)
-11:25-12:10                   ---  Educación Física\n(Carlos)        Inglés\n(Juan)                   ---   Química\n(Carlos)
-12:10-12:55                   ---  Educación Física\n(Carlos)                   ---                   ---                 ---
-13:25-14:10                   ---           Química\n(Carlos)                   ---                   ---                 ---
-14:10-14:55                   ---           Química\n(Carlos)                   ---                   ---                 ---
+                      Lunes                Martes          Miércoles             Jueves               Viernes
+07:20-08:05  Inglés\n(Juan)                   ---                ---                ---                   ---
+08:05-08:50             ---                   ---  Historia\n(María)  Historia\n(María)                   ---
+08:50-09:35             ---      Física\n(Carlos)  Historia\n(María)  Historia\n(María)      Física\n(Carlos)
+09:35-10:20             ---                   ---                ---      Arte\n(Edwin)  Computación\n(Edwin)
+10:40-11:25             ---                   ---     Inglés\n(Juan)      Arte\n(Edwin)                   ---
+11:25-12:10             ---                   ---   Física\n(Carlos)  Química\n(Carlos)                   ---
+12:10-12:55             ---      Física\n(Carlos)   Física\n(Carlos)                ---                   ---
+13:25-14:10             ---  Matemáticas\n(Edwin)   Física\n(Carlos)                ---      Física\n(Carlos)
+14:10-14:55             ---                   ---                ---                ---        Inglés\n(Juan)
 
 ----------------------------------------
 AULA: 4
 ----------------------------------------
-                         Lunes                Martes           Miércoles              Jueves            Viernes
-07:20-08:05  Historia\n(María)                   ---                 ---  Geografía\n(María)  Historia\n(María)
-08:05-08:50  Historia\n(María)  Matemáticas\n(Edwin)                 ---  Geografía\n(María)  Historia\n(María)
-08:50-09:35  Historia\n(María)  Matemáticas\n(Edwin)                 ---   Historia\n(María)                ---
-09:35-10:20  Historia\n(María)                   ---   Química\n(Carlos)   Historia\n(María)                ---
-10:40-11:25                ---                   ---   Química\n(Carlos)    Física\n(Carlos)                ---
-11:25-12:10                ---                   ---                 ---    Física\n(Carlos)                ---
-12:10-12:55                ---                   ---                 ---                 ---      Arte\n(Edwin)
-13:25-14:10                ---                   ---  Literatura\n(Juan)                 ---      Arte\n(Edwin)
-14:10-14:55                ---                   ---  Literatura\n(Juan)                 ---                ---
+                            Lunes                      Martes             Miércoles                      Jueves             Viernes
+07:20-08:05  Computación\n(Edwin)                         ---         Arte\n(Edwin)                         ---   Historia\n(María)
+08:05-08:50                   ---           Química\n(Carlos)  Computación\n(Edwin)  Educación Física\n(Carlos)  Literatura\n(Juan)
+08:50-09:35                   ---          Geografía\n(María)    Literatura\n(Juan)           Química\n(Carlos)   Historia\n(María)
+09:35-10:20                   ---  Educación Física\n(Carlos)     Historia\n(María)                         ---                 ---
+10:40-11:25                   ---  Educación Física\n(Carlos)  Matemáticas\n(Edwin)                         ---                 ---
+11:25-12:10                   ---                         ---                   ---                         ---  Literatura\n(Juan)
+12:10-12:55                   ---                         ---                   ---          Literatura\n(Juan)   Química\n(Carlos)
+13:25-14:10     Química\n(Carlos)                         ---  Matemáticas\n(Edwin)          Literatura\n(Juan)  Literatura\n(Juan)
+14:10-14:55  Computación\n(Edwin)            Física\n(Carlos)                   ---                         ---   Química\n(Carlos)
 
 ============================================================
 HORARIO INDIVIDUAL - Profesor: Edwin
 ============================================================
-                         Lunes            Martes          Miércoles             Jueves            Viernes
-07:20-08:05  Computación\n(3B)               ---  Computación\n(3B)                ---                ---
-08:05-08:50  Computación\n(3B)  Matemáticas\n(4)  Computación\n(3B)                ---                ---
-08:50-09:35                ---  Matemáticas\n(4)  Matemáticas\n(3A)                ---                ---
-09:35-10:20  Computación\n(3B)               ---  Matemáticas\n(3A)  Matemáticas\n(3B)                ---
-10:40-11:25  Computación\n(3B)               ---                ---  Matemáticas\n(3B)  Matemáticas\n(3A)
-11:25-12:10                ---               ---                ---         Arte\n(3A)  Matemáticas\n(3A)
-12:10-12:55                ---               ---                ---         Arte\n(3A)          Arte\n(4)
-13:25-14:10                ---               ---                ---  Computación\n(3A)          Arte\n(4)
-14:10-14:55                ---               ---                ---  Computación\n(3A)                ---
+                         Lunes             Martes         Miércoles             Jueves            Viernes
+07:20-08:05   Computación\n(4)  Matemáticas\n(3A)         Arte\n(4)  Matemáticas\n(3A)                ---
+08:05-08:50                ---                ---  Computación\n(4)                ---                ---
+08:50-09:35                ---                ---               ---                ---                ---
+09:35-10:20                ---                ---               ---         Arte\n(3B)  Computación\n(3B)
+10:40-11:25                ---  Computación\n(3A)  Matemáticas\n(4)         Arte\n(3B)                ---
+11:25-12:10  Computación\n(3A)  Computación\n(3A)               ---         Arte\n(3A)                ---
+12:10-12:55  Computación\n(3A)                ---               ---         Arte\n(3A)                ---
+13:25-14:10                ---  Matemáticas\n(3B)  Matemáticas\n(4)  Matemáticas\n(3A)  Matemáticas\n(3A)
+14:10-14:55   Computación\n(4)                ---               ---                ---  Matemáticas\n(3A)
 
 ============================================================
 HORARIO INDIVIDUAL - Profesor: Carlos
 ============================================================
-            Lunes                  Martes     Miércoles        Jueves        Viernes
-07:20-08:05   ---                     ---           ---           ---            ---
-08:05-08:50   ---                     ---           ---           ---            ---
-08:50-09:35   ---  Educación Física\n(3A)           ---  Física\n(3A)   Física\n(3A)
-09:35-10:20   ---  Educación Física\n(3A)  Química\n(4)  Física\n(3A)   Física\n(3A)
-10:40-11:25   ---                     ---  Química\n(4)   Física\n(4)  Química\n(3B)
-11:25-12:10   ---  Educación Física\n(3B)           ---   Física\n(4)  Química\n(3B)
-12:10-12:55   ---  Educación Física\n(3B)  Física\n(3A)           ---            ---
-13:25-14:10   ---           Química\n(3B)  Física\n(3A)           ---            ---
-14:10-14:55   ---           Química\n(3B)           ---           ---            ---
+                    Lunes                 Martes     Miércoles                 Jueves        Viernes
+07:20-08:05           ---                    ---  Física\n(3A)                    ---            ---
+08:05-08:50           ---           Química\n(4)  Física\n(3A)  Educación Física\n(4)            ---
+08:50-09:35           ---           Física\n(3B)           ---           Química\n(4)   Física\n(3B)
+09:35-10:20           ---  Educación Física\n(4)           ---           Física\n(3A)            ---
+10:40-11:25           ---  Educación Física\n(4)           ---           Física\n(3A)            ---
+11:25-12:10           ---                    ---  Física\n(3B)          Química\n(3B)            ---
+12:10-12:55           ---           Física\n(3B)  Física\n(3B)                    ---  Química\n(3A)
+13:25-14:10  Química\n(4)                    ---  Física\n(3B)                    ---   Física\n(3B)
+14:10-14:55           ---            Física\n(4)           ---          Química\n(3A)   Química\n(4)
 
 ============================================================
 HORARIO INDIVIDUAL - Profesor: Maria
 ============================================================
-                     Lunes           Martes        Miércoles          Jueves        Viernes
-07:20-08:05  Historia\n(4)   Historia\n(3A)              ---  Geografía\n(4)  Historia\n(4)
-08:05-08:50  Historia\n(4)   Historia\n(3A)              ---  Geografía\n(4)  Historia\n(4)
-08:50-09:35  Historia\n(4)  Geografía\n(3B)  Geografía\n(3B)   Historia\n(4)            ---
-09:35-10:20  Historia\n(4)              ---              ---   Historia\n(4)            ---
-10:40-11:25            ---              ---              ---             ---            ---
-11:25-12:10            ---              ---              ---             ---            ---
-12:10-12:55            ---              ---              ---             ---            ---
-13:25-14:10            ---              ---              ---             ---            ---
-14:10-14:55            ---              ---              ---             ---            ---
+            Lunes           Martes       Miércoles          Jueves          Viernes
+07:20-08:05   ---              ---             ---             ---    Historia\n(4)
+08:05-08:50   ---  Geografía\n(3A)  Historia\n(3B)  Historia\n(3B)   Historia\n(3A)
+08:50-09:35   ---   Geografía\n(4)  Historia\n(3B)  Historia\n(3B)  Geografía\n(3A)
+09:35-10:20   ---              ---   Historia\n(4)             ---  Geografía\n(3A)
+10:40-11:25   ---              ---             ---             ---              ---
+11:25-12:10   ---              ---             ---             ---              ---
+12:10-12:55   ---              ---             ---             ---              ---
+13:25-14:10   ---              ---             ---             ---              ---
+14:10-14:55   ---              ---             ---             ---              ---
 
 ============================================================
 HORARIO INDIVIDUAL - Profesor: Juan
 ============================================================
-                    Lunes Martes        Miércoles            Jueves           Viernes
-07:20-08:05           ---    ---              ---  Literatura\n(3A)      Inglés\n(3A)
-08:05-08:50           ---    ---              ---  Literatura\n(3A)      Inglés\n(3A)
-08:50-09:35  Inglés\n(3A)    ---              ---               ---  Literatura\n(3B)
-09:35-10:20  Inglés\n(3A)    ---              ---               ---               ---
-10:40-11:25           ---    ---     Inglés\n(3B)               ---               ---
-11:25-12:10           ---    ---     Inglés\n(3B)               ---               ---
-12:10-12:55           ---    ---              ---               ---               ---
-13:25-14:10           ---    ---  Literatura\n(4)               ---               ---
-14:10-14:55           ---    ---  Literatura\n(4)               ---               ---
+                    Lunes            Martes        Miércoles           Jueves          Viernes
+07:20-08:05  Inglés\n(3B)               ---              ---              ---     Inglés\n(3A)
+08:05-08:50           ---               ---              ---              ---  Literatura\n(4)
+08:50-09:35           ---               ---  Literatura\n(4)              ---              ---
+09:35-10:20           ---  Literatura\n(3A)              ---              ---              ---
+10:40-11:25           ---               ---     Inglés\n(3B)              ---              ---
+11:25-12:10           ---               ---     Inglés\n(3A)              ---  Literatura\n(4)
+12:10-12:55           ---               ---     Inglés\n(3A)  Literatura\n(4)              ---
+13:25-14:10           ---               ---              ---  Literatura\n(4)  Literatura\n(4)
+14:10-14:55  Inglés\n(3A)               ---              ---              ---     Inglés\n(3B)

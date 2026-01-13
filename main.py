@@ -45,10 +45,15 @@ TASA_MUTACION = 0.15     # Mayor mutación para escapar de óptimos locales
 TASA_CRUCE = 0.85        # Mayor cruce para combinar buenas soluciones
 
 # Pesos para la función de fitness
-PESO_CRUCES = 100      # Penalización por cruce de profesores
-PESO_DISPONIBILIDAD = 50  # Penalización por violar disponibilidad
-PESO_HORAS_VACIAS = 30    # Penalización por horas vacías entre clases
-PESO_HORAS_SEMANALES = 80 # Penalización por no cumplir horas semanales
+PESO_CRUCES = 1000         # Penalización MUY ALTA por cruce de profesores (DURO)
+PESO_DISPONIBILIDAD = 1000 # Penalización MUY ALTA por violar disponibilidad (DURO)
+PESO_HORAS_VACIAS = 200    # Penalización ALTA por cada hora vacía
+PESO_HORAS_SEMANALES = 50  # Penalización por no cumplir horas semanales
+
+# Bonificaciones (refuerzo positivo)
+BONUS_BLOQUES_CONSECUTIVOS = 25   # Bonificación por tener clases seguidas
+BONUS_INICIO_TEMPRANO = 5         # Bonificación por empezar temprano
+BONUS_COMPACTACION = 100          # Bonificación MUY ALTA por día sin huecos
 
 # ========================= ESTRUCTURAS DE DATOS =========================
 
@@ -177,31 +182,57 @@ class SistemaHorarios:
     
     def crear_cromosoma_inicial(self) -> np.ndarray:
         """
-        Crea un cromosoma inicial válido
-        Cada gen representa el ID del bloque asignado a esa posición (-1 si está vacío)
+        Crea un cromosoma inicial válido OPTIMIZADO para minimizar horas vacías.
+        Prioriza asignar bloques del mismo profesor de forma consecutiva.
         """
         cromosoma = np.full(LONGITUD_CROMOSOMA, -1, dtype=np.int32)
-        bloques_disponibles = list(range(len(self.bloques)))
-        
-        # Intentar asignar bloques de manera aleatoria pero válida
-        for bloque_id in bloques_disponibles:
-            bloque = self.bloques[bloque_id]
-            profesor = self.profesores[bloque.profesor_id]
-            
-            # Buscar posiciones válidas para este bloque
-            posiciones_validas = []
-            
-            for aula in range(NUM_AULAS):
-                for dia in range(NUM_DIAS):
-                    for hora in range(HORAS_POR_DIA - bloque.duracion + 1):
-                        # Verificar disponibilidad del profesor
-                        disponible = True
-                        for h in range(bloque.duracion):
-                            if profesor.disponibilidad[dia, hora + h] == 0:
-                                disponible = False
-                                break
-                        
-                        if disponible:
+
+        # Agrupar bloques por profesor para asignarlos juntos
+        bloques_por_profesor = {}
+        for bloque_id, bloque in enumerate(self.bloques):
+            if bloque.profesor_id not in bloques_por_profesor:
+                bloques_por_profesor[bloque.profesor_id] = []
+            bloques_por_profesor[bloque.profesor_id].append(bloque_id)
+
+        # Procesar cada profesor
+        for profesor_id, bloque_ids in bloques_por_profesor.items():
+            profesor = self.profesores[profesor_id]
+            random.shuffle(bloque_ids)  # Aleatorizar orden de bloques
+
+            for bloque_id in bloque_ids:
+                bloque = self.bloques[bloque_id]
+
+                # Buscar posiciones válidas con PRIORIDAD a posiciones consecutivas
+                posiciones_validas = []
+                posiciones_prioritarias = []  # Adyacentes a clases existentes
+
+                # Obtener curso y aula preferida
+                curso = self.cursos[bloque.curso_id]
+                aulas_permitidas = []
+
+                # Si el curso tiene aula preferida, solo usar esa aula
+                if curso.aula_preferida:
+                    try:
+                        aula_idx = AULAS.index(curso.aula_preferida)
+                        aulas_permitidas = [aula_idx]
+                    except ValueError:
+                        aulas_permitidas = list(range(NUM_AULAS))
+                else:
+                    aulas_permitidas = list(range(NUM_AULAS))
+
+                for aula in aulas_permitidas:
+                    for dia in range(NUM_DIAS):
+                        for hora in range(HORAS_POR_DIA - bloque.duracion + 1):
+                            # Verificar disponibilidad del profesor
+                            disponible = True
+                            for h in range(bloque.duracion):
+                                if profesor.disponibilidad[dia, hora + h] == 0:
+                                    disponible = False
+                                    break
+
+                            if not disponible:
+                                continue
+
                             # Verificar que las posiciones estén libres
                             posiciones_libres = True
                             for h in range(bloque.duracion):
@@ -209,17 +240,49 @@ class SistemaHorarios:
                                 if cromosoma[idx] != -1:
                                     posiciones_libres = False
                                     break
-                            
-                            if posiciones_libres:
+
+                            if not posiciones_libres:
+                                continue
+
+                            # Verificar si es ADYACENTE a otra clase del mismo profesor
+                            es_adyacente = False
+                            # Verificar hora anterior
+                            if hora > 0:
+                                for a in range(NUM_AULAS):
+                                    idx_prev = self.indices_locales_a_global(a, dia, hora - 1)
+                                    if cromosoma[idx_prev] >= 0:
+                                        bloque_prev = self.bloques[cromosoma[idx_prev]]
+                                        if bloque_prev.profesor_id == profesor_id:
+                                            es_adyacente = True
+                                            break
+                            # Verificar hora posterior
+                            if not es_adyacente and hora + bloque.duracion < HORAS_POR_DIA:
+                                for a in range(NUM_AULAS):
+                                    idx_next = self.indices_locales_a_global(a, dia, hora + bloque.duracion)
+                                    if cromosoma[idx_next] >= 0:
+                                        bloque_next = self.bloques[cromosoma[idx_next]]
+                                        if bloque_next.profesor_id == profesor_id:
+                                            es_adyacente = True
+                                            break
+
+                            if es_adyacente:
+                                posiciones_prioritarias.append((aula, dia, hora))
+                            else:
                                 posiciones_validas.append((aula, dia, hora))
-            
-            # Asignar el bloque a una posición válida aleatoria
-            if posiciones_validas:
-                aula, dia, hora = random.choice(posiciones_validas)
+
+                # Elegir posición: prioritarias primero, luego válidas
+                if posiciones_prioritarias:
+                    aula, dia, hora = random.choice(posiciones_prioritarias)
+                elif posiciones_validas:
+                    aula, dia, hora = random.choice(posiciones_validas)
+                else:
+                    continue  # No hay posición válida
+
+                # Asignar bloque
                 for h in range(bloque.duracion):
                     idx = self.indices_locales_a_global(aula, dia, hora + h)
                     cromosoma[idx] = bloque_id
-        
+
         return cromosoma
     
     def calcular_fitness(self, ga_instance, solution, solution_idx) -> float:
@@ -301,6 +364,64 @@ class SistemaHorarios:
         for profesor_id, profesor in self.profesores.items():
             diferencia_horas_semanales += abs(profesor.horas_semanales - horas_asignadas[profesor_id])
 
+        # === CÁLCULO DE BONIFICACIONES ===
+        bonificacion_total = 0
+
+        # 5. Bonificación por bloques CONSECUTIVOS del mismo profesor
+        for profesor_id in self.profesores.keys():
+            for dia in range(NUM_DIAS):
+                horas_profesor = []
+                for hora in range(HORAS_POR_DIA):
+                    for aula in range(NUM_AULAS):
+                        idx = self.indices_locales_a_global(aula, dia, hora)
+                        if cromosoma[idx] >= 0 and cromosoma[idx] < len(self.bloques):
+                            bloque = self.bloques[cromosoma[idx]]
+                            if bloque.profesor_id == profesor_id:
+                                horas_profesor.append(hora)
+                                break
+
+                # Contar bloques consecutivos
+                if len(horas_profesor) > 1:
+                    horas_profesor.sort()
+                    consecutivos = 0
+                    for i in range(len(horas_profesor) - 1):
+                        if horas_profesor[i + 1] - horas_profesor[i] == 1:
+                            consecutivos += 1
+                    bonificacion_total += consecutivos * BONUS_BLOQUES_CONSECUTIVOS
+
+        # 6. Bonificación por empezar TEMPRANO (primeras 4 horas)
+        for profesor_id in self.profesores.keys():
+            for dia in range(NUM_DIAS):
+                for hora in range(4):  # Primeras 4 horas
+                    for aula in range(NUM_AULAS):
+                        idx = self.indices_locales_a_global(aula, dia, hora)
+                        if cromosoma[idx] >= 0 and cromosoma[idx] < len(self.bloques):
+                            bloque = self.bloques[cromosoma[idx]]
+                            if bloque.profesor_id == profesor_id:
+                                bonificacion_total += BONUS_INICIO_TEMPRANO
+                                break
+
+        # 7. Bonificación por COMPACTACIÓN (todas las clases seguidas sin huecos)
+        for profesor_id in self.profesores.keys():
+            for dia in range(NUM_DIAS):
+                horas_profesor = []
+                for hora in range(HORAS_POR_DIA):
+                    for aula in range(NUM_AULAS):
+                        idx = self.indices_locales_a_global(aula, dia, hora)
+                        if cromosoma[idx] >= 0 and cromosoma[idx] < len(self.bloques):
+                            bloque = self.bloques[cromosoma[idx]]
+                            if bloque.profesor_id == profesor_id:
+                                horas_profesor.append(hora)
+                                break
+
+                # Si tiene clases y están perfectamente compactadas
+                if len(horas_profesor) > 1:
+                    horas_profesor.sort()
+                    rango_esperado = horas_profesor[-1] - horas_profesor[0] + 1
+                    if len(horas_profesor) == rango_esperado:
+                        # ¡Perfecto! Sin huecos
+                        bonificacion_total += BONUS_COMPACTACION * len(horas_profesor)
+
         # === CÁLCULO DE FITNESS ===
 
         # FASE 1: Verificar restricciones DURAS
@@ -308,33 +429,27 @@ class SistemaHorarios:
 
         if restricciones_duras > 0:
             # Si hay violaciones duras, penalizar pero permitir evolución
-            # Aún consideramos horas vacías para diferenciar soluciones con mismas violaciones duras
             penalizacion_duras = restricciones_duras * 500
-            penalizacion_vacias_suave = total_horas_vacias * 10  # Penalización suave
+            penalizacion_vacias_suave = total_horas_vacias * 10
             penalizacion_horas_suave = diferencia_horas_semanales * 5
 
             fitness = 10000 - penalizacion_duras - penalizacion_vacias_suave - penalizacion_horas_suave
-            return max(1, fitness)  # Mínimo 1 para evitar 0
+            # Agregar bonificaciones reducidas para guiar evolución
+            fitness += bonificacion_total * 0.1
+            return max(1, fitness)
 
-        # FASE 2: Sin violaciones duras, optimizar restricciones BLANDAS agresivamente
-        # Penalización EXPONENCIAL para horas vacías (objetivo principal: ELIMINARLAS)
-        if total_horas_vacias > 0:
-            # Usamos base 1.8 para ser muy agresivo contra horas vacías
-            penalizacion_vacias = PESO_HORAS_VACIAS * (1.8 ** total_horas_vacias - 1)
-        else:
-            penalizacion_vacias = 0  # ¡Perfecto! Sin horas vacías
+        # FASE 2: Sin violaciones duras, optimizar restricciones BLANDAS
+        # Penalización DIRECTA por cada hora vacía
+        penalizacion_vacias = total_horas_vacias * PESO_HORAS_VACIAS
 
-        # Penalización CUADRÁTICA para horas semanales (menos crítica)
-        if diferencia_horas_semanales > 0:
-            penalizacion_horas = PESO_HORAS_SEMANALES * (diferencia_horas_semanales ** 1.5)
-        else:
-            penalizacion_horas = 0
+        # Penalización por horas semanales no cumplidas
+        penalizacion_horas = diferencia_horas_semanales * PESO_HORAS_SEMANALES
 
         # Calcular fitness final
         penalizacion_total = penalizacion_vacias + penalizacion_horas
 
-        # Normalizar para evitar valores negativos extremos
-        fitness = 10000 / (1 + penalizacion_total / 1000)
+        # Fitness = base + bonificaciones - penalizaciones
+        fitness = 10000 + bonificacion_total - penalizacion_total
 
         return max(0, fitness)
     
@@ -430,7 +545,7 @@ class SistemaHorarios:
         
         poblacion_inicial = np.array(poblacion_inicial)
         
-        # Configurar PyGAD
+        # Configurar PyGAD con parámetros OPTIMIZADOS
         ga_instance = pygad.GA(
             num_generations=NUM_GENERACIONES,
             num_parents_mating=NUM_PADRES,
@@ -440,12 +555,20 @@ class SistemaHorarios:
             initial_population=poblacion_inicial,
             gene_type=int,
             gene_space=list(range(-1, len(self.bloques))),
+            # Selección por torneo con mayor presión selectiva
             parent_selection_type="tournament",
-            crossover_type="two_points",
+            K_tournament=5,  # Mayor presión selectiva
+            # Cruce uniforme para mejor mezcla de genes
+            crossover_type="uniform",
+            crossover_probability=TASA_CRUCE,
+            # Mutación adaptativa
             mutation_type="random",
             mutation_probability=TASA_MUTACION,
-            crossover_probability=TASA_CRUCE,
-            keep_elitism=2,
+            mutation_percent_genes="default",  # Usar valor por defecto de PyGAD
+            # Elitismo aumentado para preservar mejores soluciones
+            keep_elitism=5,
+            # Permitir duplicados para mantener diversidad
+            allow_duplicate_genes=True,
             suppress_warnings=True
         )
         
@@ -549,41 +672,20 @@ def crear_datos_ejemplo():
     
     # Crear profesores con disponibilidad
     profesores_data = [
-        {
-            "id": 1,
-            "nombre": "Edwin",
-            "codigo": "PROF001",
-            "horas_semanales": 20,
-            "disponibilidad": np.ones((NUM_DIAS, HORAS_POR_DIA))  # Disponible todas las horas
-        },
-        {
-            "id": 2,
-            "nombre": "Carlos",
-            "codigo": "PROF002",
-            "horas_semanales": 18,
-            "disponibilidad": np.ones((NUM_DIAS, HORAS_POR_DIA))  # Disponible todas las horas
-        },
-        {
-            "id": 3,
-            "nombre": "María",
-            "codigo": "PROF003",
-            "horas_semanales": 15,
-            "disponibilidad": np.ones((NUM_DIAS, HORAS_POR_DIA))
-        },
-        {
-            "id": 4,
-            "nombre": "Juan",
-            "codigo": "PROF004",
-            "horas_semanales": 12,
-            "disponibilidad": np.ones((NUM_DIAS, HORAS_POR_DIA))
-        }
+        {"id": 1, "nombre": "Dalila Luz Sánchez Casiano", "codigo": "PROF001", "horas_semanales": 7, "disponibilidad": np.ones((NUM_DIAS, HORAS_POR_DIA))},
+        {"id": 2, "nombre": "Jorge Ruiz Campos", "codigo": "PROF002", "horas_semanales": 3, "disponibilidad": np.ones((NUM_DIAS, HORAS_POR_DIA))},
+        {"id": 3, "nombre": "Ana Rosa Guevara Rodríguez", "codigo": "PROF003", "horas_semanales": 8, "disponibilidad": np.ones((NUM_DIAS, HORAS_POR_DIA))},
+        {"id": 4, "nombre": "Leonardo Hernández Cruzado", "codigo": "PROF004", "horas_semanales": 6, "disponibilidad": np.ones((NUM_DIAS, HORAS_POR_DIA))},
+        {"id": 5, "nombre": "Elia Cayetano Avalos", "codigo": "PROF005", "horas_semanales": 11, "disponibilidad": np.ones((NUM_DIAS, HORAS_POR_DIA))},
+        {"id": 6, "nombre": "Julio Cesar Chaupe Cruz", "codigo": "PROF006", "horas_semanales": 9, "disponibilidad": np.ones((NUM_DIAS, HORAS_POR_DIA))},
+        {"id": 7, "nombre": "Víctor Minchola Achín", "codigo": "PROF007", "horas_semanales": 9, "disponibilidad": np.ones((NUM_DIAS, HORAS_POR_DIA))},
+        {"id": 8, "nombre": "María Paisig Gurreonero", "codigo": "PROF008", "horas_semanales": 3, "disponibilidad": np.ones((NUM_DIAS, HORAS_POR_DIA))},
+        {"id": 9, "nombre": "Margarita Rivera Paredes", "codigo": "PROF009", "horas_semanales": 3, "disponibilidad": np.ones((NUM_DIAS, HORAS_POR_DIA))},
+        {"id": 10, "nombre": "Saira Cuba Ruiz", "codigo": "PROF010", "horas_semanales": 4, "disponibilidad": np.ones((NUM_DIAS, HORAS_POR_DIA))},
+        {"id": 11, "nombre": "Joel Montenegro", "codigo": "PROF011", "horas_semanales": 5, "disponibilidad": np.ones((NUM_DIAS, HORAS_POR_DIA))},
+        {"id": 12, "nombre": "Contrato de Arte", "codigo": "PROF012", "horas_semanales": 4, "disponibilidad": np.ones((NUM_DIAS, HORAS_POR_DIA))},
+        {"id": 13, "nombre": "Orlando Mendoza Chumpitazi", "codigo": "PROF013", "horas_semanales": 3, "disponibilidad": np.ones((NUM_DIAS, HORAS_POR_DIA))}
     ]
-    
-    # Configurar disponibilidad específica (ejemplo: Carlos no disponible los lunes)
-    profesores_data[1]["disponibilidad"][0, :] = 0  # Carlos no disponible los lunes
-    
-    # María solo disponible por las mañanas (primeras 4 horas)
-    profesores_data[2]["disponibilidad"][:, 4:] = 0
     
     # Agregar profesores al sistema
     for prof_data in profesores_data:
@@ -596,18 +698,41 @@ def crear_datos_ejemplo():
         )
         sistema.agregar_profesor(profesor)
     
-    # Crear cursos
+    # Crear cursos CON AULA ASIGNADA - Datos reales
     cursos_data = [
-        {"id": 1, "nombre": "Matemáticas", "codigo": "MAT101", "profesor_id": 1, "horas": 8},
-        {"id": 2, "nombre": "Computación", "codigo": "COMP101", "profesor_id": 1, "horas": 8},
-        {"id": 3, "nombre": "Física", "codigo": "FIS101", "profesor_id": 2, "horas": 8},
-        {"id": 4, "nombre": "Química", "codigo": "QUI101", "profesor_id": 2, "horas": 6},
-        {"id": 5, "nombre": "Historia", "codigo": "HIS101", "profesor_id": 3, "horas": 10},
-        {"id": 6, "nombre": "Geografía", "codigo": "GEO101", "profesor_id": 3, "horas": 5},
-        {"id": 7, "nombre": "Inglés", "codigo": "ING101", "profesor_id": 4, "horas": 6},
-        {"id": 8, "nombre": "Literatura", "codigo": "LIT101", "profesor_id": 4, "horas": 6},
-        {"id": 9, "nombre": "Arte", "codigo": "ART101", "profesor_id": 1, "horas": 4},
-        {"id": 10, "nombre": "Educación Física", "codigo": "EF101", "profesor_id": 2, "horas": 4},
+        {"id": 1, "nombre": "Matemática", "codigo": "MAT3A", "profesor_id": 1, "horas": 3, "aula_preferida": "3A"},
+        {"id": 2, "nombre": "Matemática", "codigo": "MAT3B", "profesor_id": 1, "horas": 4, "aula_preferida": "3B"},
+        {"id": 3, "nombre": "Matemática", "codigo": "MAT4", "profesor_id": 8, "horas": 3, "aula_preferida": "4"},
+        {"id": 4, "nombre": "Comunicación", "codigo": "COM3A", "profesor_id": 3, "horas": 4, "aula_preferida": "3A"},
+        {"id": 5, "nombre": "Comunicación", "codigo": "COM3B", "profesor_id": 3, "horas": 4, "aula_preferida": "3B"},
+        {"id": 6, "nombre": "Comunicación", "codigo": "COM4", "profesor_id": 9, "horas": 3, "aula_preferida": "4"},
+        {"id": 7, "nombre": "CyT", "codigo": "CYT3A", "profesor_id": 5, "horas": 3, "aula_preferida": "3A"},
+        {"id": 8, "nombre": "Tutoría", "codigo": "TUT3A", "profesor_id": 5, "horas": 2, "aula_preferida": "3A"},
+        {"id": 9, "nombre": "CyT", "codigo": "CYT3B", "profesor_id": 5, "horas": 2, "aula_preferida": "3B"},
+        {"id": 10, "nombre": "CyT", "codigo": "CYT4", "profesor_id": 5, "horas": 4, "aula_preferida": "4"},
+        {"id": 11, "nombre": "Inglés", "codigo": "ING3A", "profesor_id": 7, "horas": 3, "aula_preferida": "3A"},
+        {"id": 12, "nombre": "Inglés", "codigo": "ING3B", "profesor_id": 7, "horas": 3, "aula_preferida": "3B"},
+        {"id": 13, "nombre": "Inglés", "codigo": "ING4", "profesor_id": 7, "horas": 3, "aula_preferida": "4"},
+        {"id": 14, "nombre": "Educación Física", "codigo": "EF3A", "profesor_id": 6, "horas": 2, "aula_preferida": "3A"},
+        {"id": 15, "nombre": "Educación Física", "codigo": "EF3B", "profesor_id": 6, "horas": 2, "aula_preferida": "3B"},
+        {"id": 16, "nombre": "Arte y Cultura", "codigo": "AYC3B", "profesor_id": 6, "horas": 2, "aula_preferida": "3B"},
+        {"id": 17, "nombre": "Tutoría", "codigo": "TUT3B", "profesor_id": 6, "horas": 1, "aula_preferida": "3B"},
+        {"id": 18, "nombre": "Educación Física", "codigo": "EF4", "profesor_id": 6, "horas": 2, "aula_preferida": "4"},
+        {"id": 19, "nombre": "DPCC", "codigo": "DPCC3A", "profesor_id": 4, "horas": 2, "aula_preferida": "3A"},
+        {"id": 20, "nombre": "DPCC", "codigo": "DPCC3B", "profesor_id": 4, "horas": 2, "aula_preferida": "3B"},
+        {"id": 21, "nombre": "DPCC", "codigo": "DPCC4", "profesor_id": 4, "horas": 2, "aula_preferida": "4"},
+        {"id": 22, "nombre": "CCSS", "codigo": "CCSS3A", "profesor_id": 10, "horas": 2, "aula_preferida": "3A"},
+        {"id": 23, "nombre": "CCSS", "codigo": "CCSS3B", "profesor_id": 10, "horas": 2, "aula_preferida": "3B"},
+        {"id": 24, "nombre": "CCSS", "codigo": "CCSS4", "profesor_id": 2, "horas": 2, "aula_preferida": "4"},
+        {"id": 25, "nombre": "Tutoría", "codigo": "TUT4", "profesor_id": 2, "horas": 1, "aula_preferida": "4"},
+        {"id": 26, "nombre": "EPT", "codigo": "EPT3A", "profesor_id": 11, "horas": 2, "aula_preferida": "3A"},
+        {"id": 27, "nombre": "EPT", "codigo": "EPT3B", "profesor_id": 11, "horas": 1, "aula_preferida": "3B"},
+        {"id": 28, "nombre": "EPT", "codigo": "EPT4", "profesor_id": 11, "horas": 2, "aula_preferida": "4"},
+        {"id": 29, "nombre": "Arte y Cultura", "codigo": "AYC3A", "profesor_id": 12, "horas": 2, "aula_preferida": "3A"},
+        {"id": 30, "nombre": "Arte y Cultura", "codigo": "AYC4", "profesor_id": 12, "horas": 2, "aula_preferida": "4"},
+        {"id": 31, "nombre": "Religión", "codigo": "REL3A", "profesor_id": 13, "horas": 1, "aula_preferida": "3A"},
+        {"id": 32, "nombre": "Religión", "codigo": "REL3B", "profesor_id": 13, "horas": 1, "aula_preferida": "3B"},
+        {"id": 33, "nombre": "Religión", "codigo": "REL4", "profesor_id": 13, "horas": 1, "aula_preferida": "4"}
     ]
     
     for curso_data in cursos_data:
